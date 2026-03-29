@@ -12,6 +12,8 @@ button { cursor: pointer; border: none; border-radius: 6px; padding: 8px 15px; t
 .btn-main { background: var(--primary); color: white; }
 .btn-match { background: var(--success); color: white; width: 100%; margin-top: 10px; }
 .btn-action { background: var(--warning); color: white; padding: 5px 10px; font-size: 12px; }
+.btn-win { background: var(--success); color: white; }
+.btn-lose { background: #94a3b8; color: white; }
 
 /* 卡片样式 */
 .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
@@ -26,3 +28,13 @@ button { cursor: pointer; border: none; border-radius: 6px; padding: 8px 15px; t
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
 .modal-content { background: white; padding: 30px; border-radius: 15px; text-align: center; }
 .modal-btns { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
+
+/* 新增：个人信息样式 */
+.info-row { line-height: 2; }
+.form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.form-row input, .form-row select { padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; }
+
+/* 新增：聊天样式 */
+.chat-msg { margin: 5px 0; }
+.chat-msg.me { text-align: right; color: var(--primary); }
+.chat-msg.other { text-align: left; color: #334155; }

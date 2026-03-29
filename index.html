@@ -12,6 +12,17 @@
             <p>找志同道合的搭子，实力匹配，手动晋级</p>
         </header>
 
+        <!-- 新增：个人信息面板 -->
+        <section class="panel" id="user-info-panel" style="display: none;">
+            <h3>👤 我的个人信息</h3>
+            <div class="info-row">
+                <p><strong>昵称：</strong><span id="info-name">-</span></p>
+                <p><strong>性别：</strong><span id="info-gender">-</span></p>
+                <p><strong>擅长分类：</strong><span id="info-category">-</span></p>
+                <p><strong>当前积分：</strong><span id="info-score">-</span></p>
+            </div>
+        </section>
+
         <section class="panel">
             <h3>📇 完善个人名片</h3>
             <div class="form-row">
@@ -47,10 +58,10 @@
             <button onclick="smartMatch()">✨ 智能推荐 (找同分段)</button>
         </nav>
 
-        <div id="square" class="user-grid">
-            </div>
+        <div id="square" class="user-grid"></div>
     </div>
 
+    <!-- 活动结算弹窗（原有） -->
     <div id="modal" class="modal">
         <div class="modal-content">
             <h3>🎉 活动结束结算</h3>
@@ -63,7 +74,21 @@
         </div>
     </div>
 
+    <!-- 新增：聊天弹窗 -->
+    <div id="chat-modal" class="modal">
+        <div class="modal-content" style="width: 400px; max-width: 90%;">
+            <h3>💬 与 <span id="chat-partner-name"></span> 聊天</h3>
+            <!-- 聊天记录区域 -->
+            <div id="chat-history" style="height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin: 10px 0; text-align: left;"></div>
+            <!-- 输入框+发送按钮 -->
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="chat-input" placeholder="输入消息..." style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <button onclick="sendChatMsg()" class="btn-main">发送</button>
+            </div>
+            <button onclick="closeChatModal()" style="margin-top: 10px;" class="btn-action">关闭聊天</button>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
-
 </html>
