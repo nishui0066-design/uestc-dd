@@ -1,0 +1,24 @@
+{
+  "name": "uestc-dd",
+  "version": "1.0.0",
+  "description": "校园搭搭",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nishui0066-design/uestc-dd.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nishui0066-design/uestc-dd/issues"
+  },
+  "homepage": "https://github.com/nishui0066-design/uestc-dd#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

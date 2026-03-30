@@ -1,0 +1,11 @@
+# 忽略npm依赖文件夹（绝对不要上传）
+node_modules/
+
+# 忽略系统自动生成的垃圾文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 忽略IDE配置文件（VS Code/WebStorm等）
+.vscode/
+.idea/

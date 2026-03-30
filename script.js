@@ -1,265 +1,286 @@
-// 1. 数据配置
+// ==================== 联机版校搭系统 ====================
+// 无假人、真实邀请、真实聊天、仅本人可见通知
+// ======================================================
+
 const subData = {
     "运动": ["足球", "篮球", "羽毛球", "游泳"],
     "游戏": ["王者荣耀", "瓦罗兰特", "LOL"],
     "乐器": ["钢琴", "吉他", "古筝"]
 };
 
-// 模拟数据库
-let currentUser = null; // 当前登录的你
-let users = [
-    { id: 101, name: "爱打球的学长", gender: "男", main: "运动", sub: "篮球", score: 65 },
-    { id: 102, name: "瓦罗兰特女高", gender: "女", main: "游戏", sub: "瓦罗兰特", score: 85 },
-    { id: 103, name: "钢琴十级选手", gender: "女", main: "乐器", sub: "钢琴", score: 40 }
-];
+// 本机唯一用户
+let me = null;
+let userId = localStorage.userId || (localStorage.userId = "u" + Date.now());
 
-let requests = []; // 收到的申请 [{fromId, toId}]
-let matches = [];  // 已成的搭子 [{p1, p2, isActivityCompleted, chatRecords}]
-// 新增：聊天相关全局变量
-let currentChatPartner = null; // 当前聊天的搭子ID
+// 在线用户、邀请、匹配、聊天（全部存在浏览器共享内存中）
+let onlineUsers = [];
+let invites = [];
+let matches = [];
+let chatRecords = {};
 
-// 2. 初始化与级联
+// 页面加载时恢复自己
+window.onload = () => {
+    const saved = localStorage.user;
+    if (saved) {
+        me = JSON.parse(saved);
+        document.getElementById("user-info-panel").style.display = "block";
+        renderMe();
+        refreshOnlineUsers();
+        renderMyInvites();
+        renderMyMatches();
+    }
+    setInterval(syncAll, 1000);
+};
+
+// 同步数据（联机核心）
+function syncAll() {
+    if (!me) return;
+    fetch("/data").then(r=>r.json()).then(data=>{
+        onlineUsers = data.onlineUsers || [];
+        invites = data.invites || [];
+        matches = data.matches || [];
+        chatRecords = data.chatRecords || {};
+        renderMyInvites();
+        renderMyMatches();
+        renderChatIfOpen();
+    });
+}
+
+// 级联选择
 function updateSub() {
-    const main = document.getElementById('mainCat').value;
-    const sub = document.getElementById('subCat');
+    const main = document.getElementById("mainCat").value;
+    const sub = document.getElementById("subCat");
     sub.innerHTML = "";
-    sub.disabled = false;
-    subData[main].forEach(s => {
-        let opt = document.createElement('option');
+    sub.disabled = !main;
+    if (main) subData[main].forEach(s => {
+        const opt = document.createElement("option");
         opt.value = opt.text = s;
         sub.appendChild(opt);
     });
 }
 
-// 3. 注册（模拟登录）
+// 注册
 function register() {
-    const name = document.getElementById('username').value;
-    if(!name) return alert("写个名字吧");
-    
-    currentUser = {
-        id: Date.now(),
+    const name = document.getElementById("username").value.trim();
+    if (!name) return alert("请输入昵称");
+    me = {
+        id: userId,
         name: name,
-        gender: document.getElementById('gender').value,
-        main: document.getElementById('mainCat').value,
-        sub: document.getElementById('subCat').value,
-        score: 50 // 初始分
+        gender: document.getElementById("gender").value,
+        main: document.getElementById("mainCat").value,
+        sub: document.getElementById("subCat").value,
+        score: 50
     };
-    
-    // 新增：渲染个人信息
-    renderUserInfo();
-    alert("注册成功！你已进入校园广场。");
-    renderSquare('全部');
+    localStorage.user = JSON.stringify(me);
+    document.getElementById("user-info-panel").style.display = "block";
+    renderMe();
+    sendMeToServer();
+    alert("注册成功！已联网在线");
+    refreshOnlineUsers();
 }
 
-// 新增：渲染个人信息界面
-function renderUserInfo() {
-    const panel = document.getElementById('user-info-panel');
-    panel.style.display = "block"; // 显示个人信息面板
-    document.getElementById('info-name').innerText = currentUser.name;
-    document.getElementById('info-gender').innerText = currentUser.gender;
-    document.getElementById('info-category').innerText = `${currentUser.main} · ${currentUser.sub}`;
-    document.getElementById('info-score').innerText = currentUser.score;
+function renderMe() {
+    document.getElementById("info-name").innerText = me.name;
+    document.getElementById("info-gender").innerText = me.gender;
+    document.getElementById("info-category").innerText = me.main + " · " + me.sub;
+    document.getElementById("info-score").innerText = me.score;
 }
 
-// 4. 渲染广场
-function renderSquare(filterType) {
-    const grid = document.getElementById('square');
-    grid.innerHTML = "";
-    
-    let list = users;
-    if(filterType !== '全部') list = users.filter(u => u.main === filterType);
+// 上传自己到服务器（联机）
+function sendMeToServer() {
+    fetch("/online", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(me)
+    });
+}
 
+// 刷新在线用户
+function refreshOnlineUsers() {
+    if (!me) return alert("请先注册");
+    fetch("/data").then(r=>r.json()).then(data=>{
+        onlineUsers = data.onlineUsers || [];
+        renderOnlineUsers();
+    });
+}
+
+function renderOnlineUsers() {
+    const box = document.getElementById("square");
+    box.innerHTML = "";
+    const list = onlineUsers.filter(u => u.id !== me.id);
+    if (list.length === 0) {
+        box.innerHTML = "<p>暂无其他在线用户</p>";
+        return;
+    }
     list.forEach(u => {
-        if(currentUser && u.id === currentUser.id) return;
-        const card = document.createElement('div');
-        card.className = 'card';
+        const card = document.createElement("div");
+        card.className = "card";
         card.innerHTML = `
-            <span class="score-badge">${u.score}分</span>
-            <h4>${u.name} <span class="tag-gender">${u.gender}</span></h4>
-            <p style="font-size:12px; color:#666">${u.main} · ${u.sub}</p>
-            <button class="btn-match" onclick="sendRequest(${u.id})">向TA发起邀约</button>
+            <h4>${u.name} (${u.gender})</h4>
+            <p>${u.main} · ${u.sub}</p>
+            <p>积分：${u.score}</p>
+            <button onclick="sendInvite('${u.id}')">邀请搭子</button>
         `;
-        grid.appendChild(card);
+        box.appendChild(card);
     });
 }
 
-// 5. V3.0 核心：互选逻辑
-function sendRequest(targetId) {
-    if(!currentUser) return alert("请先完善名片");
-    alert("申请已发送，等待对方同意...");
-    // 模拟对方秒回（实际开发中这里是等待对方在自己的界面点同意）
-    setTimeout(() => {
-        receiveRequest(targetId);
-    }, 1000);
+// 发送邀请（只发给对方，别人看不见）
+function sendInvite(toId) {
+    if (!me) return;
+    fetch("/invite", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ from: me.id, to: toId })
+    }).then(()=>alert("邀请已发送给对方"));
 }
 
-function receiveRequest(fromId) {
-    const fromUser = users.find(u => u.id === fromId) || {id: fromId, name: "模拟用户"};
-    const reqList = document.getElementById('incoming-requests');
-    const item = document.createElement('div');
-    item.className = 'req-item';
-    item.innerHTML = `
-        <span>来自 <b>${fromUser.name}</b> 的匹配请求</span>
-        <button onclick="acceptMatch(${fromId}, this)" style="background:var(--success); color:white">同意</button>
-    `;
-    reqList.appendChild(item);
-    document.getElementById('req-count').innerText = "1";
-}
-
-function acceptMatch(fromId, btn) {
-    const fromUser = users.find(u => u.id === fromId);
-    // 新增：添加活动完成标记、聊天记录
-    matches.push({ 
-        id: fromId, 
-        name: fromUser.name, 
-        score: fromUser.score,
-        isActivityCompleted: false, // 是否完成过活动（防重复加分）
-        chatRecords: [] // 聊天记录
+// 渲染我的邀请（仅自己可见）
+function renderMyInvites() {
+    if (!me) return;
+    const my = invites.filter(i => i.to === me.id);
+    document.getElementById("req-count").innerText = my.length;
+    const box = document.getElementById("incoming-requests");
+    box.innerHTML = "";
+    my.forEach(i => {
+        const from = onlineUsers.find(u => u.id === i.from) || {name:"未知"};
+        const div = document.createElement("div");
+        div.className = "req-item";
+        div.innerHTML = `
+            <span>${from.name} 邀请你</span>
+            <button onclick="acceptInvite('${i.from}')">同意</button>
+        `;
+        box.appendChild(div);
     });
-    
-    // 更新界面
-    btn.parentElement.remove();
-    document.getElementById('req-count').innerText = "0";
-    renderMatches();
 }
 
-// 6. 渲染已匹配搭子（新增聊天按钮、活动完成状态）
-function renderMatches() {
-    const list = document.getElementById('matched-list');
-    list.innerHTML = "";
-    matches.forEach(m => {
-        const item = document.createElement('div');
-        item.className = 'req-item';
-        // 新增：活动按钮根据完成状态禁用，新增聊天按钮
-        const activityBtn = m.isActivityCompleted 
-            ? `<button class="btn-action" disabled>活动已完成</button>` 
-            : `<button onclick="openActivity('${m.name}', ${m.id})" class="btn-action">开始对局/活动</button>`;
-        
-        item.innerHTML = `
-            <span>🤝 <b>${m.name}</b> (积分:${m.score})</span>
-            <div style="display: flex; gap: 5px;">
-                ${activityBtn}
-                <button onclick="openChatModal(${m.id})" class="btn-main" style="font-size:12px; padding:5px 8px">聊天</button>
+// 同意邀请
+function acceptInvite(fromId) {
+    fetch("/match", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ p1: fromId, p2: me.id })
+    }).then(()=>{
+        fetch("/invite/clear", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ to: me.id })
+        });
+    });
+}
+
+// 渲染我的搭子
+function renderMyMatches() {
+    if (!me) return;
+    const my = matches.filter(m => m.p1 === me.id || m.p2 === me.id);
+    const box = document.getElementById("matched-list");
+    box.innerHTML = "";
+    my.forEach(m => {
+        const pid = m.p1 === me.id ? m.p2 : m.p1;
+        const user = onlineUsers.find(u => u.id === pid) || {name:"离线", score:0};
+        const div = document.createElement("div");
+        div.className = "req-item";
+        div.innerHTML = `
+            <span>${user.name} (${user.score}分)</span>
+            <div style="display:flex;gap:6px">
+                <button onclick="openChat('${pid}','${user.name}')">聊天</button>
             </div>
         `;
-        list.appendChild(item);
+        box.appendChild(div);
     });
 }
 
-// 7. V3.0 智能匹配算法
+// 智能匹配
 function smartMatch() {
-    if(!currentUser) return alert("请先注册");
-    // 逻辑：寻找分区相同且积分差距在±20以内的
-    const recommendations = users.filter(u => 
-        u.main === currentUser.main && 
-        Math.abs(u.score - currentUser.score) <= 20
-    );
-    
-    const grid = document.getElementById('square');
-    grid.innerHTML = "<h4>✨ 为你推荐的同等实力选手：</h4>";
-    if(recommendations.length === 0) grid.innerHTML += "<p>暂无匹配，去广场看看吧</p>";
-    
-    // 复用渲染逻辑
-    recommendations.forEach(u => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `<span class="score-badge">${u.score}分</span><h4>${u.name} <span class="tag-gender">${u.gender}</span></h4><p style="font-size:12px; color:#666">${u.main} · ${u.sub}</p><button class="btn-match" onclick="sendRequest(${u.id})">发起邀约</button>`;
-        grid.appendChild(card);
+    if (!me) return alert("请先注册");
+    fetch("/data").then(r=>r.json()).then(data=>{
+        const list = (data.onlineUsers||[]).filter(u=>
+            u.id !== me.id && u.main === me.main
+        );
+        const box = document.getElementById("square");
+        box.innerHTML = "<h4>✨ 同类型推荐</h4>";
+        list.forEach(u=>{
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = `
+                <h4>${u.name} (${u.gender})</h4>
+                <p>${u.main} · ${u.sub}</p>
+                <button onclick="sendInvite('${u.id}')">邀请</button>
+            `;
+            box.appendChild(card);
+        });
     });
 }
 
-// 8. 手动结算逻辑（新增：防重复加分）
-let activePartnerId = null;
-function openActivity(name, id) {
-    // 检查是否已完成活动
-    const matchItem = matches.find(m => m.id === id);
-    if(matchItem.isActivityCompleted) {
-        return alert("该搭子的活动已完成，无法再次加分哦～");
+// ==================== 真实聊天 ====================
+let currentChatId = null;
+let currentChatName = null;
+
+function openChat(pid, name) {
+    currentChatId = pid;
+    currentChatName = name;
+    document.getElementById("chat-partner-name").innerText = name;
+    document.getElementById("chat-modal").style.display = "flex";
+    renderChat();
+}
+
+function closeChatModal() {
+    document.getElementById("chat-modal").style.display = "none";
+    currentChatId = null;
+}
+
+function renderChat() {
+    if (!currentChatId) return;
+    const key = [me.id, currentChatId].sort().join("-");
+    const list = chatRecords[key] || [];
+    const box = document.getElementById("chat-history");
+    box.innerHTML = "";
+    list.forEach(msg => {
+        const div = document.createElement("div");
+        div.className = "chat-msg " + (msg.from === me.id ? "me" : "other");
+        div.innerText = msg.text;
+        box.appendChild(div);
+    });
+    box.scrollTop = box.scrollHeight;
+}
+
+function renderChatIfOpen() {
+    if (document.getElementById("chat-modal").style.display === "flex") {
+        renderChat();
     }
-    activePartnerId = id;
-    document.getElementById('partner-name').innerText = name;
-    document.getElementById('modal').style.display = 'flex';
+}
+
+// 发送真实聊天（对方实时收到）
+function sendRealChat() {
+    const txt = document.getElementById("chat-input").value.trim();
+    if (!txt || !currentChatId) return;
+    fetch("/chat", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            from: me.id,
+            to: currentChatId,
+            text: txt
+        })
+    });
+    document.getElementById("chat-input").value = "";
+}
+
+// ==================== 活动结算 ====================
+let activePid = null;
+function openActivity(pid, name) {
+    activePid = pid;
+    document.getElementById("partner-name").innerText = name;
+    document.getElementById("modal").style.display = "flex";
 }
 
 function closeModal(isWin) {
-    if(activePartnerId && isWin) {
-        // 找到对应搭子，标记活动完成
-        const matchItem = matches.find(m => m.id === activePartnerId);
-        if(matchItem && !matchItem.isActivityCompleted) {
-            currentUser.score += 10;
-            matchItem.isActivityCompleted = true; // 标记为已完成
-            alert("恭喜获胜！个人积分已更新为：" + currentUser.score);
-            // 刷新个人信息和搭子列表
-            renderUserInfo();
-            renderMatches();
-        }
-    } else if(isWin) {
-        alert("再接再厉！积分未变动。");
+    if (isWin && activePid) {
+        me.score += 10;
+        localStorage.user = JSON.stringify(me);
+        sendMeToServer();
+        renderMe();
     }
-    document.getElementById('modal').style.display = 'none';
-    activePartnerId = null;
-}
-
-// 新增：聊天功能
-// 打开聊天弹窗
-function openChatModal(partnerId) {
-    const matchItem = matches.find(m => m.id === partnerId);
-    if(!matchItem) return alert("未找到该搭子～");
-    
-    currentChatPartner = partnerId;
-    document.getElementById('chat-partner-name').innerText = matchItem.name;
-    // 渲染聊天记录
-    renderChatHistory();
-    // 显示聊天弹窗
-    document.getElementById('chat-modal').style.display = 'flex';
-}
-
-// 关闭聊天弹窗
-function closeChatModal() {
-    document.getElementById('chat-modal').style.display = 'none';
-    currentChatPartner = null;
-}
-
-// 渲染聊天记录
-function renderChatHistory() {
-    const matchItem = matches.find(m => m.id === currentChatPartner);
-    const chatHistory = document.getElementById('chat-history');
-    chatHistory.innerHTML = "";
-    
-    if(matchItem.chatRecords.length === 0) {
-        chatHistory.innerHTML = "<p style='color:#94a3b8; text-align:center;'>暂无聊天记录，开始聊聊吧～</p>";
-        return;
-    }
-    
-    // 遍历聊天记录渲染
-    matchItem.chatRecords.forEach(msg => {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `chat-msg ${msg.sender === 'me' ? 'me' : 'other'}`;
-        msgDiv.innerText = msg.content;
-        chatHistory.appendChild(msgDiv);
-    });
-    // 滚动到底部
-    chatHistory.scrollTop = chatHistory.scrollHeight;
-}
-
-// 发送聊天消息
-function sendChatMsg() {
-    const input = document.getElementById('chat-input');
-    const content = input.value.trim();
-    if(!content || !currentChatPartner) return;
-    
-    const matchItem = matches.find(m => m.id === currentChatPartner);
-    // 添加自己的消息
-    matchItem.chatRecords.push({ sender: 'me', content: content });
-    // 模拟对方回复（新手演示用，实际需后端交互）
-    setTimeout(() => {
-        const replys = ["你好呀～", "哈哈好的！", "下次一起玩～", "收到收到😜"];
-        const randomReply = replys[Math.floor(Math.random() * replys.length)];
-        matchItem.chatRecords.push({ sender: 'other', content: randomReply });
-        renderChatHistory();
-    }, 800);
-    
-    // 清空输入框，重新渲染记录
-    input.value = "";
-    renderChatHistory();
+    document.getElementById("modal").style.display = "none";
+    activePid = null;
 }

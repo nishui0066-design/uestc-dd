@@ -2,24 +2,24 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>校搭 v3.0 - 智能互选匹配系统</title>
+    <title>校搭 v3.0 - 真实多人联机版</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🤝 校搭 (Campus Match) v3.0</h1>
-            <p>找志同道合的搭子，实力匹配，手动晋级</p>
+            <h1>🤝 校搭 (Campus Match) v3.0 联机版</h1>
+            <p>真实用户匹配 · 实时聊天 · 同一WiFi互联</p>
         </header>
 
-        <!-- 新增：个人信息面板 -->
+        <!-- 个人信息 -->
         <section class="panel" id="user-info-panel" style="display: none;">
-            <h3>👤 我的个人信息</h3>
+            <h3>👤 我的信息</h3>
             <div class="info-row">
                 <p><strong>昵称：</strong><span id="info-name">-</span></p>
                 <p><strong>性别：</strong><span id="info-gender">-</span></p>
-                <p><strong>擅长分类：</strong><span id="info-category">-</span></p>
-                <p><strong>当前积分：</strong><span id="info-score">-</span></p>
+                <p><strong>类别：</strong><span id="info-category">-</span></p>
+                <p><strong>积分：</strong><span id="info-score">-</span></p>
             </div>
         </section>
 
@@ -44,48 +44,46 @@
 
         <section class="my-status">
             <div class="status-box">
-                <h4>🔔 待处理申请 (<span id="req-count">0</span>)</h4>
+                <h4>🔔 我的邀请 (<span id="req-count">0</span>)</h4>
                 <div id="incoming-requests"></div>
             </div>
             <div class="status-box">
-                <h4>✅ 我的搭子 (已匹配)</h4>
+                <h4>✅ 我的搭子</h4>
                 <div id="matched-list"></div>
             </div>
         </section>
 
         <nav class="filter-bar">
-            <button onclick="renderSquare('全部')">全校广场</button>
-            <button onclick="smartMatch()">✨ 智能推荐 (找同分段)</button>
+            <button onclick="refreshOnlineUsers()">刷新在线用户</button>
+            <button onclick="smartMatch()">✨ 智能匹配</button>
         </nav>
 
         <div id="square" class="user-grid"></div>
     </div>
 
-    <!-- 活动结算弹窗（原有） -->
+    <!-- 活动结算 -->
     <div id="modal" class="modal">
         <div class="modal-content">
-            <h3>🎉 活动结束结算</h3>
-            <p>本次与 <span id="partner-name"></span> 的活动愉快吗？</p>
-            <p>胜方将获得 10 积分，输方不扣分。</p>
+            <h3>🎉 活动结算</h3>
+            <p>对手：<span id="partner-name"></span></p>
+            <p>赢+10分，输不扣分</p>
             <div class="modal-btns">
                 <button onclick="closeModal(true)" class="btn-win">我赢了(+10)</button>
-                <button onclick="closeModal(false)" class="btn-lose">惜败(不加分)</button>
+                <button onclick="closeModal(false)" class="btn-lose">结束</button>
             </div>
         </div>
     </div>
 
-    <!-- 新增：聊天弹窗 -->
+    <!-- 真实聊天弹窗 -->
     <div id="chat-modal" class="modal">
-        <div class="modal-content" style="width: 400px; max-width: 90%;">
+        <div class="modal-content" style="width:400px;">
             <h3>💬 与 <span id="chat-partner-name"></span> 聊天</h3>
-            <!-- 聊天记录区域 -->
-            <div id="chat-history" style="height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin: 10px 0; text-align: left;"></div>
-            <!-- 输入框+发送按钮 -->
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="chat-input" placeholder="输入消息..." style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                <button onclick="sendChatMsg()" class="btn-main">发送</button>
+            <div id="chat-history" style="height:200px;overflow-y:auto;border:1px solid #eee;border-radius:8px;padding:10px;margin:10px 0;text-align:left"></div>
+            <div style="display:flex;gap:10px;">
+                <input type="text" id="chat-input" placeholder="输入消息..." style="flex:1;padding:8px;">
+                <button onclick="sendRealChat()" class="btn-main">发送</button>
             </div>
-            <button onclick="closeChatModal()" style="margin-top: 10px;" class="btn-action">关闭聊天</button>
+            <button onclick="closeChatModal()" style="margin-top:10px">关闭</button>
         </div>
     </div>
 
