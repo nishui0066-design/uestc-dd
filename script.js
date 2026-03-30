@@ -35,15 +35,18 @@ window.onload = () => {
 // 同步数据（联机核心）
 function syncAll() {
     if (!me) return;
-    fetch("/data").then(r=>r.json()).then(data=>{
-        onlineUsers = data.onlineUsers || [];
-        invites = data.invites || [];
-        matches = data.matches || [];
-        chatRecords = data.chatRecords || {};
-        renderMyInvites();
-        renderMyMatches();
-        renderChatIfOpen();
-    });
+    fetch("/data")
+        .then(r=>r.json())
+        .then(data=>{
+            onlineUsers = data.onlineUsers || [];
+            invites = data.invites || [];
+            matches = data.matches || [];
+            chatRecords = data.chatRecords || {};
+            renderMyInvites();
+            renderMyMatches();
+            renderChatIfOpen();
+        })
+        .catch(err => console.error("同步失败:", err));
 }
 
 // 级联选择
@@ -98,10 +101,16 @@ function sendMeToServer() {
 // 刷新在线用户
 function refreshOnlineUsers() {
     if (!me) return alert("请先注册");
-    fetch("/data").then(r=>r.json()).then(data=>{
-        onlineUsers = data.onlineUsers || [];
-        renderOnlineUsers();
-    });
+    fetch("/data")
+        .then(r=>r.json())
+        .then(data=>{
+            onlineUsers = data.onlineUsers || [];
+            renderOnlineUsers();
+        })
+        .catch(err => {
+            console.error("刷新失败:", err);
+            alert("网络错误，请检查服务器是否运行");
+        });
 }
 
 function renderOnlineUsers() {
@@ -184,6 +193,7 @@ function renderMyMatches() {
             <span>${user.name} (${user.score}分)</span>
             <div style="display:flex;gap:6px">
                 <button onclick="openChat('${pid}','${user.name}')">聊天</button>
+                <button onclick="openActivity('${pid}','${user.name}')">🎮 活动</button>
             </div>
         `;
         box.appendChild(div);
@@ -197,19 +207,42 @@ function smartMatch() {
         const list = (data.onlineUsers||[]).filter(u=>
             u.id !== me.id && u.main === me.main
         );
-        const box = document.getElementById("square");
-        box.innerHTML = "<h4>✨ 同类型推荐</h4>";
+        
+        if (list.length === 0) {
+            alert("没有找到同类型的在线用户");
+            return;
+        }
+        
+        // 创建弹窗
+        const modalHtml = `
+            <div id="smart-match-modal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:1000;">
+                <div style="background:white;border-radius:15px;padding:20px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;">
+                    <h3>✨ 智能匹配推荐</h3>
+                    <div id="smart-match-list"></div>
+                    <button onclick="closeSmartMatch()" style="margin-top:15px;background:#95a5a6;">关闭</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        const listBox = document.getElementById("smart-match-list");
         list.forEach(u=>{
             const card = document.createElement("div");
-            card.className = "card";
+            card.style.cssText = "border:1px solid #ddd;border-radius:8px;padding:10px;margin-bottom:10px;";
             card.innerHTML = `
                 <h4>${u.name} (${u.gender})</h4>
-                <p>${u.main} · ${u.sub}</p>
-                <button onclick="sendInvite('${u.id}')">邀请</button>
+                <p>${u.main} · ${u.sub} | 积分:${u.score}</p>
+                <button onclick="sendInvite('${u.id}');closeSmartMatch();">邀请搭子</button>
             `;
-            box.appendChild(card);
+            listBox.appendChild(card);
         });
     });
+}
+
+function closeSmartMatch() {
+    const modal = document.getElementById("smart-match-modal");
+    if (modal) modal.remove();
 }
 
 // ==================== 真实聊天 ====================
