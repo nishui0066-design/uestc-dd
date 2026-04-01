@@ -30,6 +30,13 @@ window.onload = () => {
         renderMyMatches();
     }
     setInterval(syncAll, 1000);
+    window.addEventListener("beforeunload", () => {
+    fetch("/offline", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ id: me ? me.id : null })
+    });
+});
 };
 
 // 同步数据（联机核心）
@@ -151,6 +158,7 @@ function renderMyInvites() {
     document.getElementById("req-count").innerText = my.length;
     const box = document.getElementById("incoming-requests");
     box.innerHTML = "";
+    
     my.forEach(i => {
         const from = onlineUsers.find(u => u.id === i.from) || {name:"未知"};
         const div = document.createElement("div");
@@ -162,44 +170,71 @@ function renderMyInvites() {
         box.appendChild(div);
     });
 }
-
 // 同意邀请
 function acceptInvite(fromId) {
-    fetch("/match", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ p1: fromId, p2: me.id })
-    }).then(()=>{
+    // 检查是否已经是搭子
+    const alreadyMatched = matches.some(m => 
+        (m.p1 === fromId && m.p2 === me.id) || 
+        (m.p1 === me.id && m.p2 === fromId)
+    );
+    
+    if (alreadyMatched) {
+        alert("你们已经是搭子了");
+        // 清除这条邀请
         fetch("/invite/clear", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({ to: me.id })
         });
+        renderMyInvites();
+        return;
+    }
+    
+    fetch("/match", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ p1: fromId, p2: me.id })
+    }).then(() => {
+        fetch("/invite/clear", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ to: me.id })
+        });
+        refreshOnlineUsers();
+        renderMyInvites();
+        renderMyMatches();
     });
 }
-
 // 渲染我的搭子
 function renderMyMatches() {
     if (!me) return;
     const my = matches.filter(m => m.p1 === me.id || m.p2 === me.id);
     const box = document.getElementById("matched-list");
     box.innerHTML = "";
-    my.forEach(m => {
-        const pid = m.p1 === me.id ? m.p2 : m.p1;
-        const user = onlineUsers.find(u => u.id === pid) || {name:"离线", score:0};
-        const div = document.createElement("div");
-        div.className = "req-item";
-        div.innerHTML = `
-            <span>${user.name} (${user.score}分)</span>
-            <div style="display:flex;gap:6px">
-                <button onclick="openChat('${pid}','${user.name}')">聊天</button>
-                <button onclick="openActivity('${pid}','${user.name}')">🎮 活动</button>
-            </div>
-        `;
-        box.appendChild(div);
+    
+    fetch("/data").then(r=>r.json()).then(data => {
+        const allUsers = [...data.onlineUsers, ...data.userProfiles];
+        const uniqueUsers = allUsers.filter((u, index, self) => 
+            index === self.findIndex(t => t.id === u.id)
+        );
+        
+        my.forEach(m => {
+            const pid = m.p1 === me.id ? m.p2 : m.p1;
+            const user = uniqueUsers.find(u => u.id === pid) || {name:"离线", score:"--"};
+            const div = document.createElement("div");
+            div.className = "req-item";
+            div.innerHTML = `
+                <span style="cursor:pointer;color:#5b78f5;text-decoration:underline;" onclick="showUserDetail('${pid}')">${user.name} (${user.score}分)</span>
+                <div style="display:flex;gap:6px">
+                    <button onclick="openChat('${pid}','${user.name}')">聊天</button>
+                    <button onclick="openActivity('${pid}','${user.name}')">🎮 活动</button>
+                    <button onclick="removeMatch('${pid}')" style="background:#e74c3c">解除</button>
+                </div>
+            `;
+            box.appendChild(div);
+        });
     });
 }
-
 // 智能匹配
 function smartMatch() {
     if (!me) return alert("请先注册");
@@ -316,4 +351,49 @@ function closeModal(isWin) {
     }
     document.getElementById("modal").style.display = "none";
     activePid = null;
+}
+
+//------------------- 解除搭子关系 ------------------
+function removeMatch(partnerId) {
+    if (confirm("确定要解除搭子关系吗？")) {
+        fetch("/match/remove", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ me: me.id, partner: partnerId })
+        }).then(() => {
+            alert("已解除搭子关系");
+        });
+    }
+}
+
+//=================== 用户详情弹窗 ====================
+function showUserDetail(pid) {
+    let user = onlineUsers.find(u => u.id === pid);
+    if (user) {
+        showUserModal(user);
+    } else {
+        fetch("/data").then(r=>r.json()).then(data=>{
+            const profile = data.userProfiles.find(p => p.id === pid);
+            if (profile) {
+                showUserModal(profile);
+            } else {
+                alert("用户信息不存在");
+            }
+        });
+    }
+}
+
+function showUserModal(user) {
+    document.getElementById("user-detail-content").innerHTML = `
+        <p><strong>昵称：</strong>${user.name}</p>
+        <p><strong>性别：</strong>${user.gender}</p>
+        <p><strong>类别：</strong>${user.main} · ${user.sub}</p>
+        <p><strong>积分：</strong>${user.score}</p>
+    `;
+    document.getElementById("user-detail-modal").style.display = "flex";
+}
+
+//=================== 关闭用户详情弹窗 ====================
+function closeUserDetailModal() {
+    document.getElementById("user-detail-modal").style.display = "none";
 }

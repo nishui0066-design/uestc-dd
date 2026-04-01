@@ -10,6 +10,7 @@ const DATA_FILE = "./data.json";
 // 读取保存的数据
 let data = {
     onlineUsers: [],
+    userProfiles: [],
     invites: [],
     matches: [],
     chatRecords: {}
@@ -33,11 +34,6 @@ function saveData() {
 
 
 
-// 清理超时用户
-setInterval(() => {
-    const now = Date.now();
-    data.onlineUsers = data.onlineUsers.filter(u => now - u.t < 10000);
-}, 2000);
 
 app.get("/", (req, res) => res.sendFile("index.html", { root: __dirname }));
 app.get("/data", (req, res) => res.json(data));
@@ -48,6 +44,12 @@ app.post("/online", (req, res) => {
     const idx = data.onlineUsers.findIndex(x => x.id === u.id);
     if (idx >= 0) data.onlineUsers[idx] = u;
     else data.onlineUsers.push(u);
+    
+    // 保存用户档案
+    const profileIdx = data.userProfiles.findIndex(p => p.id === u.id);
+    if (profileIdx >= 0) data.userProfiles[profileIdx] = u;
+    else data.userProfiles.push(u);
+    
     saveData();
     res.sendStatus(200);
 });
@@ -84,5 +86,21 @@ app.post("/chat", (req, res) => {
     saveData();
     res.sendStatus(200);
 });
+
+app.post("/offline", (req, res) => {
+    const { id } = req.body;
+    data.onlineUsers = data.onlineUsers.filter(u => u.id !== id);
+    res.sendStatus(200);
+});
+
+app.post("/match/remove", (req, res) => {
+    const { me, partner } = req.body;
+    data.matches = data.matches.filter(m => 
+        !(m.p1 === me && m.p2 === partner) && 
+        !(m.p1 === partner && m.p2 === me)
+    );
+    res.sendStatus(200);
+});
+
 
 app.listen(8080, () => console.log("校搭联机服务器启动：http://localhost:8080"));
