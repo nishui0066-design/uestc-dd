@@ -72,11 +72,6 @@ app.post("/match", (req, res) => {
     res.sendStatus(200);
 });
 
-app.post("/match", (req, res) => {
-    data.matches.push(req.body);
-    saveData();
-    res.sendStatus(200);
-});
 
 app.post("/chat", (req, res) => {
     const {from,to,text} = req.body;
@@ -90,6 +85,7 @@ app.post("/chat", (req, res) => {
 app.post("/offline", (req, res) => {
     const { id } = req.body;
     data.onlineUsers = data.onlineUsers.filter(u => u.id !== id);
+    saveData();
     res.sendStatus(200);
 });
 
@@ -99,6 +95,7 @@ app.post("/match/remove", (req, res) => {
         !(m.p1 === me && m.p2 === partner) && 
         !(m.p1 === partner && m.p2 === me)
     );
+    saveData();
     res.sendStatus(200);
 });
 

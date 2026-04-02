@@ -152,15 +152,23 @@ function sendInvite(toId) {
 }
 
 // 渲染我的邀请（仅自己可见）
-function renderMyInvites() {
+async function renderMyInvites() {
     if (!me) return;
     const my = invites.filter(i => i.to === me.id);
     document.getElementById("req-count").innerText = my.length;
     const box = document.getElementById("incoming-requests");
     box.innerHTML = "";
     
+    // 获取所有用户档案（包含离线用户）
+    const response = await fetch("/data");
+    const data = await response.json();
+    const allUsers = [...data.onlineUsers, ...data.userProfiles];
+    const uniqueUsers = allUsers.filter((u, index, self) => 
+        index === self.findIndex(t => t.id === u.id)
+    );
+    
     my.forEach(i => {
-        const from = onlineUsers.find(u => u.id === i.from) || {name:"未知"};
+        const from = uniqueUsers.find(u => u.id === i.from) || {name:"未知"};
         const div = document.createElement("div");
         div.className = "req-item";
         div.innerHTML = `
@@ -348,6 +356,7 @@ function closeModal(isWin) {
         localStorage.user = JSON.stringify(me);
         sendMeToServer();
         renderMe();
+        renderMyMatches();
     }
     document.getElementById("modal").style.display = "none";
     activePid = null;
@@ -362,6 +371,7 @@ function removeMatch(partnerId) {
             body: JSON.stringify({ me: me.id, partner: partnerId })
         }).then(() => {
             alert("已解除搭子关系");
+            renderMyMatches();
         });
     }
 }
