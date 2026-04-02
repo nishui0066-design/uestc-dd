@@ -2,11 +2,7 @@
 // 无假人、真实邀请、真实聊天、仅本人可见通知
 // ======================================================
 
-const subData = {
-    "运动": ["足球", "篮球", "羽毛球", "游泳"],
-    "游戏": ["王者荣耀", "瓦罗兰特", "LOL"],
-    "乐器": ["钢琴", "吉他", "古筝"]
-};
+
 
 // 本机唯一用户
 let me = null;
@@ -22,21 +18,24 @@ let chatRecords = {};
 window.onload = () => {
     const saved = localStorage.user;
     if (saved) {
-        me = JSON.parse(saved);
-        document.getElementById("user-info-panel").style.display = "block";
-        renderMe();
-        refreshOnlineUsers();
-        renderMyInvites();
-        renderMyMatches();
+    me = JSON.parse(saved);
+    if (!me.scores) me.scores = {};
+    if (!me.currentSport) me.currentSport = null;
+    if (!me.currentStatus) me.currentStatus = "在线";
+    document.getElementById("user-info-panel").style.display = "block";
+    renderMe();
+    refreshOnlineUsers();
+    renderMyInvites();
+    renderMyMatches();
     }
-    setInterval(syncAll, 1000);
+    setInterval(syncAll, 3000);
     window.addEventListener("beforeunload", () => {
-    fetch("/offline", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ id: me ? me.id : null })
+        fetch("/offline", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ id: me ? me.id : null })
+        });
     });
-});
 };
 
 // 同步数据（联机核心）
@@ -56,44 +55,22 @@ function syncAll() {
         .catch(err => console.error("同步失败:", err));
 }
 
-// 级联选择
-function updateSub() {
-    const main = document.getElementById("mainCat").value;
-    const sub = document.getElementById("subCat");
-    sub.innerHTML = "";
-    sub.disabled = !main;
-    if (main) subData[main].forEach(s => {
-        const opt = document.createElement("option");
-        opt.value = opt.text = s;
-        sub.appendChild(opt);
-    });
-}
 
-// 注册
-function register() {
-    const name = document.getElementById("username").value.trim();
-    if (!name) return alert("请输入昵称");
-    me = {
-        id: userId,
-        name: name,
-        gender: document.getElementById("gender").value,
-        main: document.getElementById("mainCat").value,
-        sub: document.getElementById("subCat").value,
-        score: 50
-    };
-    localStorage.user = JSON.stringify(me);
-    document.getElementById("user-info-panel").style.display = "block";
-    renderMe();
-    sendMeToServer();
-    alert("注册成功！已联网在线");
-    refreshOnlineUsers();
-}
 
 function renderMe() {
     document.getElementById("info-name").innerText = me.name;
     document.getElementById("info-gender").innerText = me.gender;
-    document.getElementById("info-category").innerText = me.main + " · " + me.sub;
-    document.getElementById("info-score").innerText = me.score;
+    
+    // 根据当前运动显示对应积分
+    if (me.currentSport && me.scores && me.scores[me.currentSport] !== undefined) {
+        document.getElementById("info-score").innerText = me.scores[me.currentSport];
+    } else {
+        document.getElementById("info-score").innerText = "—";
+    }
+    
+    const sportText = me.currentSport ? me.currentSport : "未选择";
+    const statusText = me.currentStatus ? me.currentStatus : "在线";
+    document.getElementById("info-status").innerHTML = `${sportText} · ${statusText} <button onclick="openStatusModal()" style="font-size:12px;padding:2px 8px;">设置</button>`;
 }
 
 // 上传自己到服务器（联机）
@@ -120,21 +97,46 @@ function refreshOnlineUsers() {
         });
 }
 
+let lastOnlineHash = "";
+
+let lastUserIds = [];
+
 function renderOnlineUsers() {
-    const box = document.getElementById("square");
-    box.innerHTML = "";
-    const list = onlineUsers.filter(u => u.id !== me.id);
-    if (list.length === 0) {
-        box.innerHTML = "<p>暂无其他在线用户</p>";
+    if (!me) return;
+    const list = getFilteredUsers();
+    const newUserIds = list.map(u => u.id);
+    
+    // 检查用户列表是否变化
+    if (JSON.stringify(newUserIds) === JSON.stringify(lastUserIds)) {
+        // 只更新积分
+        list.forEach(u => {
+            const card = document.querySelector(`.card[data-id='${u.id}']`);
+            if (card) {
+                const totalScore = u.scores ? Object.values(u.scores).reduce((a,b) => (a||0)+(b||0), 0) : 0;
+                const scoreSpan = card.querySelector(".score-value");
+                if (scoreSpan) scoreSpan.innerText = totalScore;
+            }
+        });
         return;
     }
+    
+    lastUserIds = newUserIds;
+    const box = document.getElementById("square");
+    box.innerHTML = "";
+    
+    if (list.length === 0) {
+        box.innerHTML = "<p>暂无符合条件的在线用户</p>";
+        return;
+    }
+    
     list.forEach(u => {
         const card = document.createElement("div");
         card.className = "card";
+        card.setAttribute("data-id", u.id);
         card.innerHTML = `
             <h4>${u.name} (${u.gender})</h4>
-            <p>${u.main} · ${u.sub}</p>
-            <p>积分：${u.score}</p>
+            <p>🎮 ${u.currentSport || "未选择"} · ${u.currentStatus || "在线"}</p>
+            <p>⭐ ${u.currentSport || "未选择"}积分：<span class="score-value">${u.scores && u.scores[u.currentSport] ? u.scores[u.currentSport] : "—"}</span></p>
             <button onclick="sendInvite('${u.id}')">邀请搭子</button>
         `;
         box.appendChild(card);
@@ -228,11 +230,11 @@ function renderMyMatches() {
         
         my.forEach(m => {
             const pid = m.p1 === me.id ? m.p2 : m.p1;
-            const user = uniqueUsers.find(u => u.id === pid) || {name:"离线", score:"--"};
-            const div = document.createElement("div");
+            const user = uniqueUsers.find(u => u.id === pid) || {name:"离线", scores: {}, currentSport: null};
+            const sportScore = (user.currentSport && user.scores && user.scores[user.currentSport] !== undefined) ? user.scores[user.currentSport] : "—";
             div.className = "req-item";
             div.innerHTML = `
-                <span style="cursor:pointer;color:#5b78f5;text-decoration:underline;" onclick="showUserDetail('${pid}')">${user.name} (${user.score}分)</span>
+                <span style="cursor:pointer;color:#5b78f5;text-decoration:underline;" onclick="showUserDetail('${pid}')">${user.name} (${sportScore}分)</span>
                 <div style="display:flex;gap:6px">
                     <button onclick="openChat('${pid}','${user.name}')">聊天</button>
                     <button onclick="openActivity('${pid}','${user.name}')">🎮 活动</button>
@@ -248,7 +250,7 @@ function smartMatch() {
     if (!me) return alert("请先注册");
     fetch("/data").then(r=>r.json()).then(data=>{
         const list = (data.onlineUsers||[]).filter(u=>
-            u.id !== me.id && u.main === me.main
+            u.id !== me.id && u.currentSport === me.currentSport && u.currentSport
         );
         
         if (list.length === 0) {
@@ -352,11 +354,19 @@ function openActivity(pid, name) {
 
 function closeModal(isWin) {
     if (isWin && activePid) {
-        me.score += 10;
-        localStorage.user = JSON.stringify(me);
-        sendMeToServer();
-        renderMe();
-        renderMyMatches();
+        const currentSport = me.currentSport;
+        if (currentSport) {
+            if (!me.scores[currentSport]) {
+                me.scores[currentSport] = 50;
+            }
+            me.scores[currentSport] += 10;
+            localStorage.setItem("user", JSON.stringify(me));
+            sendMeToServer();
+            renderMe();
+            renderMyMatches();
+        } else {
+            alert("请先设置当前运动");
+        }
     }
     document.getElementById("modal").style.display = "none";
     activePid = null;
@@ -394,11 +404,23 @@ function showUserDetail(pid) {
 }
 
 function showUserModal(user) {
+    let scoresHtml = "";
+    if (user.scores && Object.keys(user.scores).length > 0) {
+        scoresHtml = "<p><strong>各项积分：</strong></p><ul style='text-align:left;'>";
+        for (const [sport, score] of Object.entries(user.scores)) {
+            scoresHtml += `<li>${sport}: ${score}分</li>`;
+        }
+        scoresHtml += "</ul>";
+    } else {
+        scoresHtml = "<p>暂无运动记录</p>";
+    }
+    
     document.getElementById("user-detail-content").innerHTML = `
         <p><strong>昵称：</strong>${user.name}</p>
         <p><strong>性别：</strong>${user.gender}</p>
-        <p><strong>类别：</strong>${user.main} · ${user.sub}</p>
-        <p><strong>积分：</strong>${user.score}</p>
+        <p><strong>当前运动：</strong>${user.currentSport || "未选择"}</p>
+        <p><strong>当前状态：</strong>${user.currentStatus || "在线"}</p>
+        ${scoresHtml}
     `;
     document.getElementById("user-detail-modal").style.display = "flex";
 }
@@ -407,3 +429,86 @@ function showUserModal(user) {
 function closeUserDetailModal() {
     document.getElementById("user-detail-modal").style.display = "none";
 }
+
+//=================== 筛选功能 ====================
+let currentFilterSport = "";
+let currentFilterStatus = "";
+let currentFilterScore = "";
+
+function applyFilter() {
+    currentFilterSport = document.getElementById("filter-sport").value;
+    currentFilterStatus = document.getElementById("filter-status").value;
+    currentFilterScore = document.getElementById("filter-score").value;
+    renderOnlineUsers();
+}
+
+function getFilteredUsers() {
+    let list = onlineUsers.filter(u => u.id !== me.id);
+    
+    if (currentFilterSport) {
+        list = list.filter(u => u.currentSport === currentFilterSport);
+    }
+    
+    if (currentFilterStatus) {
+        list = list.filter(u => u.currentStatus === currentFilterStatus);
+    }
+    
+    if (currentFilterScore) {
+        list = list.filter(u => {
+            const totalScore = u.scores ? Object.values(u.scores).reduce((a,b) => a + b, 0) : 0;
+            switch(currentFilterScore) {
+                case "0-100": return totalScore >= 0 && totalScore <= 100;
+                case "100-300": return totalScore > 100 && totalScore <= 300;
+                case "300-600": return totalScore > 300 && totalScore <= 600;
+                case "600-1500": return totalScore > 600 && totalScore <= 1500;
+                case "1500-3000": return totalScore > 1500 && totalScore <= 3000;
+                case "3000+": return totalScore > 3000;
+                default: return true;
+            }
+        });
+    }
+    
+    return list;
+}
+
+
+
+function openStatusModal() {
+    const sports = ["足球", "篮球", "羽毛球", "游泳", "王者荣耀", "瓦罗兰特", "LOL", "钢琴", "吉他", "古筝"];
+    const sportOptions = sports.map(s => `<option value="${s}" ${me.currentSport === s ? "selected" : ""}>${s}</option>`).join("");
+    const statusOptions = ["在线", "等待匹配", "游戏中", "休息中"].map(s => `<option value="${s}" ${me.currentStatus === s ? "selected" : ""}>${s}</option>`).join("");
+    
+    const modalHtml = `
+        <div id="status-modal" class="modal" style="display:flex;">
+            <div class="modal-content">
+                <h3>设置当前状态</h3>
+                <p>我想玩：</p>
+                <select id="sport-select" style="width:100%;padding:8px;margin:10px 0;">${sportOptions}</select>
+                <p>状态：</p>
+                <select id="status-select" style="width:100%;padding:8px;margin:10px 0;">${statusOptions}</select>
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button onclick="saveStatus()" class="btn-main">保存</button>
+                    <button onclick="closeStatusModal()" class="btn-lose">取消</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML("beforeend", modalHtml);
+}
+
+function saveStatus() {
+    const newSport = document.getElementById("sport-select").value;
+    const newStatus = document.getElementById("status-select").value;
+    me.currentSport = newSport;
+    me.currentStatus = newStatus;
+    localStorage.setItem("user", JSON.stringify(me));
+    renderMe();
+    sendMeToServer();
+    closeStatusModal();
+}
+
+function closeStatusModal() {
+    const modal = document.getElementById("status-modal");
+    if (modal) modal.remove();
+}
+

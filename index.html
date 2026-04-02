@@ -18,29 +18,12 @@
             <div class="info-row">
                 <p><strong>昵称：</strong><span id="info-name">-</span></p>
                 <p><strong>性别：</strong><span id="info-gender">-</span></p>
-                <p><strong>类别：</strong><span id="info-category">-</span></p>
                 <p><strong>积分：</strong><span id="info-score">-</span></p>
+                <p><strong>当前状态：</strong><span id="info-status">未设置</span> <button onclick="openStatusModal()" style="font-size:12px;padding:2px 8px;">设置</button></p>
             </div>
         </section>
 
-        <section class="panel">
-            <h3>📇 完善个人名片</h3>
-            <div class="form-row">
-                <input type="text" id="username" placeholder="昵称">
-                <select id="gender">
-                    <option value="男">男</option>
-                    <option value="女">女</option>
-                </select>
-                <select id="mainCat" onchange="updateSub()">
-                    <option value="">大类</option>
-                    <option value="运动">运动</option>
-                    <option value="游戏">游戏</option>
-                    <option value="乐器">乐器</option>
-                </select>
-                <select id="subCat" disabled><option>小类</option></select>
-                <button onclick="register()" class="btn-main">进入校园广场</button>
-            </div>
-        </section>
+        
 
         <section class="my-status">
             <div class="status-box">
@@ -54,12 +37,31 @@
         </section>
 
         <nav class="filter-bar">
-            <button onclick="refreshOnlineUsers()">刷新在线用户</button>
-            <button onclick="smartMatch()">✨ 智能匹配</button>
-        </nav>
-
-        <div id="square" class="user-grid"></div>
-    </div>
+    <select id="filter-sport">
+        <option value="">所有运动</option>
+        <option value="足球">足球</option>
+        <option value="篮球">篮球</option>
+        <option value="羽毛球">羽毛球</option>
+        <option value="游泳">游泳</option>
+        <option value="王者荣耀">王者荣耀</option>
+        <option value="瓦罗兰特">瓦罗兰特</option>
+        <option value="LOL">LOL</option>
+        <option value="钢琴">钢琴</option>
+        <option value="吉他">吉他</option>
+        <option value="古筝">古筝</option>
+    </select>
+    <select id="filter-status">
+        <option value="">所有状态</option>
+        <option value="在线">在线</option>
+        <option value="等待匹配">等待匹配</option>
+        <option value="游戏中">游戏中</option>
+        <option value="休息中">休息中</option>
+    </select>
+    <button onclick="applyFilter()">筛选</button>
+    <button onclick="refreshOnlineUsers()">刷新在线用户</button>
+    <button onclick="smartMatch()">✨ 智能匹配</button>
+</nav>
+<div id="square" class="user-grid"></div>
 
     <!-- 活动结算 -->
     <div id="modal" class="modal">
@@ -74,7 +76,7 @@
         </div>
     </div>
 
-    <!-- 真实聊天弹窗 -->
+        <!-- 真实聊天弹窗 -->
     <div id="chat-modal" class="modal">
         <div class="modal-content" style="width:400px;">
             <h3>💬 与 <span id="chat-partner-name"></span> 聊天</h3>
@@ -84,18 +86,22 @@
                 <button onclick="sendRealChat()" class="btn-main">发送</button>
             </div>
             <button onclick="closeChatModal()" style="margin-top:10px">关闭</button>
-        
         </div>
     </div>
 
     <div id="user-detail-modal" class="modal">
-    <div class="modal-content" style="width:350px;">
-        <h3>📋 用户详情</h3>
-        <div id="user-detail-content" style="text-align:left;margin:15px 0;"></div>
-        <button onclick="closeUserDetailModal()" class="btn-lose">关闭</button>
+        <div class="modal-content" style="width:350px;">
+            <h3>📋 用户详情</h3>
+            <div id="user-detail-content" style="text-align:left;margin:15px 0;"></div>
+            <button onclick="closeUserDetailModal()" class="btn-lose">关闭</button>
+        </div>
     </div>
-</div>
 
+    <script>
+        if (!localStorage.getItem("user")) {
+            window.location.href = "register.html";
+        }
+    </script>
     <script src="script.js"></script>
 </body>
 </html>

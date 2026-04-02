@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>注册 - 校搭</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .register-container {
+            max-width: 400px;
+            margin: 100px auto;
+            text-align: center;
+        }
+        .register-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .register-box input, .register-box select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .register-box button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-box">
+            <h1>🤝 校搭</h1>
+            <p>填写信息，开始你的搭子之旅</p>
+            <input type="text" id="reg-name" placeholder="昵称" autocomplete="off">
+            <select id="reg-gender">
+                <option value="男">男</option>
+                <option value="女">女</option>
+            </select>
+            <button onclick="doRegister()" class="btn-main">进入广场</button>
+        </div>
+    </div>
+    <script>
+        function doRegister() {
+            const name = document.getElementById("reg-name").value.trim();
+            if (!name) {
+                alert("请输入昵称");
+                return;
+            }
+            const gender = document.getElementById("reg-gender").value;
+            const userId = "u" + Date.now();
+            const user = {
+                id: userId,
+                name: name,
+                gender: gender,
+                scores: {},
+                currentSport: null,
+                currentStatus: "在线"
+};
+            localStorage.setItem("user", JSON.stringify(user));
+            localStorage.setItem("userId", userId);
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>

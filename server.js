@@ -67,8 +67,15 @@ app.post("/invite/clear", (req, res) => {
 });
 
 app.post("/match", (req, res) => {
-    data.matches.push(req.body);
-    saveData();
+    const { p1, p2 } = req.body;
+    const alreadyExists = data.matches.some(m => 
+        (m.p1 === p1 && m.p2 === p2) || 
+        (m.p1 === p2 && m.p2 === p1)
+    );
+    if (!alreadyExists) {
+        data.matches.push({ p1, p2 });
+        saveData();
+    }
     res.sendStatus(200);
 });
 
