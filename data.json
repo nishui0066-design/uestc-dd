@@ -1,0 +1,63 @@
+{
+  "onlineUsers": [],
+  "userProfiles": [
+    {
+      "id": "u1775131752365",
+      "name": "逆水",
+      "gender": "男",
+      "scores": {
+        "足球": 60
+      },
+      "currentSport": "足球",
+      "currentStatus": "在线",
+      "t": 1775131923690
+    },
+    {
+      "id": "u1775131897868",
+      "name": "nishui666",
+      "gender": "男",
+      "scores": {
+        "足球": 100
+      },
+      "currentSport": "足球",
+      "currentStatus": "在线",
+      "t": 1775485649944
+    },
+    {
+      "id": "u1775132556152",
+      "name": "逆水",
+      "gender": "女",
+      "scores": {
+        "足球": 80,
+        "篮球": 130
+      },
+      "currentSport": "足球",
+      "currentStatus": "在线",
+      "t": 1775485593616
+    }
+  ],
+  "invites": [],
+  "matches": [
+    {
+      "p1": "u1775132556152",
+      "p2": "u1775131897868"
+    }
+  ],
+  "chatRecords": {},
+  "history": [
+    {
+      "winner": "u1775132556152",
+      "loser": "u1775131897868",
+      "sport": "篮球",
+      "winnerScoreChange": 10,
+      "time": 1775483818157
+    },
+    {
+      "winner": "u1775131897868",
+      "loser": "u1775131752365",
+      "sport": "足球",
+      "winnerScoreChange": 10,
+      "time": 1775484412933
+    }
+  ]
+}

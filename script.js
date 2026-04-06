@@ -97,30 +97,10 @@ function refreshOnlineUsers() {
         });
 }
 
-let lastOnlineHash = "";
-
-let lastUserIds = [];
-
 function renderOnlineUsers() {
     if (!me) return;
     const list = getFilteredUsers();
-    const newUserIds = list.map(u => u.id);
     
-    // 检查用户列表是否变化
-    if (JSON.stringify(newUserIds) === JSON.stringify(lastUserIds)) {
-        // 只更新积分
-        list.forEach(u => {
-            const card = document.querySelector(`.card[data-id='${u.id}']`);
-            if (card) {
-                const totalScore = u.scores ? Object.values(u.scores).reduce((a,b) => (a||0)+(b||0), 0) : 0;
-                const scoreSpan = card.querySelector(".score-value");
-                if (scoreSpan) scoreSpan.innerText = totalScore;
-            }
-        });
-        return;
-    }
-    
-    lastUserIds = newUserIds;
     const box = document.getElementById("square");
     box.innerHTML = "";
     
@@ -133,10 +113,11 @@ function renderOnlineUsers() {
         const card = document.createElement("div");
         card.className = "card";
         card.setAttribute("data-id", u.id);
+        const sportScore = (u.currentSport && u.scores && u.scores[u.currentSport]) ? u.scores[u.currentSport] : "—";
         card.innerHTML = `
-            <h4>${u.name} (${u.gender})</h4>
+            <h4>${u.name} (${u.gender}) <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background-color:${u.currentStatus === '在线' ? '#2ecc71' : (u.currentStatus === '等待匹配' ? '#f39c12' : (u.currentStatus === '游戏中' ? '#e74c3c' : '#95a5a6'))};margin-left:8px;"></span></h4>
             <p>🎮 ${u.currentSport || "未选择"} · ${u.currentStatus || "在线"}</p>
-            <p>⭐ ${u.currentSport || "未选择"}积分：<span class="score-value">${u.scores && u.scores[u.currentSport] ? u.scores[u.currentSport] : "—"}</span></p>
+            <p>⭐ ${u.currentSport || "未选择"}积分：<span class="score-value">${sportScore}</span></p>
             <button onclick="sendInvite('${u.id}')">邀请搭子</button>
         `;
         box.appendChild(card);
@@ -232,6 +213,7 @@ function renderMyMatches() {
             const pid = m.p1 === me.id ? m.p2 : m.p1;
             const user = uniqueUsers.find(u => u.id === pid) || {name:"离线", scores: {}, currentSport: null};
             const sportScore = (user.currentSport && user.scores && user.scores[user.currentSport] !== undefined) ? user.scores[user.currentSport] : "—";
+            const div = document.createElement("div");
             div.className = "req-item";
             div.innerHTML = `
                 <span style="cursor:pointer;color:#5b78f5;text-decoration:underline;" onclick="showUserDetail('${pid}')">${user.name} (${sportScore}分)</span>
@@ -275,11 +257,12 @@ function smartMatch() {
         list.forEach(u=>{
             const card = document.createElement("div");
             card.style.cssText = "border:1px solid #ddd;border-radius:8px;padding:10px;margin-bottom:10px;";
+            const sportScore = (u.currentSport && u.scores && u.scores[u.currentSport]) ? u.scores[u.currentSport] : "—";
             card.innerHTML = `
                 <h4>${u.name} (${u.gender})</h4>
-                <p>${u.main} · ${u.sub} | 积分:${u.score}</p>
+                <p>🎮 ${u.currentSport || "未选择"} · ${u.currentStatus || "在线"} | ${u.currentSport ? u.currentSport + "积分" : "积分"}:${sportScore}</p>
                 <button onclick="sendInvite('${u.id}');closeSmartMatch();">邀请搭子</button>
-            `;
+        `;
             listBox.appendChild(card);
         });
     });
@@ -316,7 +299,8 @@ function renderChat() {
     list.forEach(msg => {
         const div = document.createElement("div");
         div.className = "chat-msg " + (msg.from === me.id ? "me" : "other");
-        div.innerText = msg.text;
+        const time = new Date(msg.t).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        div.innerText = `[${time}] ${msg.text}`;
         box.appendChild(div);
     });
     box.scrollTop = box.scrollHeight;
@@ -360,10 +344,23 @@ function closeModal(isWin) {
                 me.scores[currentSport] = 50;
             }
             me.scores[currentSport] += 10;
+            // 保存活动记录
+            fetch("/history/add", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+            winner: me.id,
+            loser: activePid,
+            sport: currentSport,
+            winnerScoreChange: 10,
+            time: Date.now()
+            })
+        });
             localStorage.setItem("user", JSON.stringify(me));
             sendMeToServer();
             renderMe();
             renderMyMatches();
+            renderOnlineUsers();
         } else {
             alert("请先设置当前运动");
         }
@@ -468,6 +465,12 @@ function getFilteredUsers() {
         });
     }
     
+    // 按当前运动积分从高到低排序
+    list.sort((a, b) => {
+        const scoreA = (a.currentSport && a.scores && a.scores[a.currentSport]) ? a.scores[a.currentSport] : 0;
+        const scoreB = (b.currentSport && b.scores && b.scores[b.currentSport]) ? b.scores[b.currentSport] : 0;
+        return scoreB - scoreA;
+    });
     return list;
 }
 
@@ -512,3 +515,78 @@ function closeStatusModal() {
     if (modal) modal.remove();
 }
 
+function showHistory() {
+    fetch("/data").then(r=>r.json()).then(res => {
+        const myHistory = res.history;
+        if (myHistory.length === 0) {
+            alert("暂无活动记录");
+            return;
+        }
+        
+        let historyHtml = "<div style='text-align:left;max-height:300px;overflow-y:auto;'>";
+        myHistory.forEach(h => {
+            const isWinner = h.winner === me.id;
+            const result = isWinner ? "获胜" : "失败";
+            const scoreChange = isWinner ? "+10" : "0";
+            const time = new Date(h.time).toLocaleString();
+            historyHtml += `<p style='border-bottom:1px solid #eee;padding:8px 0;'>${time}<br>${h.sport} · ${result} · 积分变化: ${scoreChange}</p>`;
+        });
+        historyHtml += "</div>";
+        
+        const modalHtml = `
+            <div id="history-modal" class="modal" style="display:flex;">
+                <div class="modal-content" style="width:350px;">
+                    <h3>📜 我的活动记录</h3>
+                    ${historyHtml}
+                    <button onclick="closeHistoryModal()" class="btn-lose" style="margin-top:15px;">关闭</button>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML("beforeend", modalHtml);
+    });
+}
+function closeHistoryModal() {
+    const modal = document.getElementById("history-modal");
+    if (modal) modal.remove();
+}
+
+function openEditProfile() {
+    const modalHtml = `
+        <div id="edit-profile-modal" class="modal" style="display:flex;">
+            <div class="modal-content" style="width:350px;">
+                <h3>编辑资料</h3>
+                <p>昵称：</p>
+                <input type="text" id="edit-name" value="${me.name}" style="width:100%;padding:8px;margin-bottom:15px;">
+                <p>性别：</p>
+                <select id="edit-gender" style="width:100%;padding:8px;margin-bottom:15px;">
+                    <option value="男" ${me.gender === "男" ? "selected" : ""}>男</option>
+                    <option value="女" ${me.gender === "女" ? "selected" : ""}>女</option>
+                </select>
+                <div style="display:flex;gap:10px;">
+                    <button onclick="saveEditProfile()" class="btn-main">保存</button>
+                    <button onclick="closeEditProfile()" class="btn-lose">取消</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML("beforeend", modalHtml);
+}
+
+function closeEditProfile() {
+    const modal = document.getElementById("edit-profile-modal");
+    if (modal) modal.remove();
+}
+
+function saveEditProfile() {
+    const newName = document.getElementById("edit-name").value.trim();
+    if (!newName) {
+        alert("昵称不能为空");
+        return;
+    }
+    me.name = newName;
+    me.gender = document.getElementById("edit-gender").value;
+    localStorage.setItem("user", JSON.stringify(me));
+    renderMe();
+    sendMeToServer();
+    closeEditProfile();
+}

@@ -13,13 +13,15 @@ let data = {
     userProfiles: [],
     invites: [],
     matches: [],
-    chatRecords: {}
+    chatRecords: {},
+    history: []
 };
 
 if (fs.existsSync(DATA_FILE)) {
     try {
         const saved = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
         data = saved;
+        if (!data.history) data.history = [];
         console.log("✅ 已加载历史数据");
     } catch(e) {
         console.log("加载数据失败，使用默认数据");
@@ -106,5 +108,10 @@ app.post("/match/remove", (req, res) => {
     res.sendStatus(200);
 });
 
+app.post("/history/add", (req, res) => {
+    data.history.push(req.body);
+    saveData();
+    res.sendStatus(200);
+});
 
 app.listen(8080, () => console.log("校搭联机服务器启动：http://localhost:8080"));
