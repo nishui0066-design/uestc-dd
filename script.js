@@ -68,6 +68,11 @@ function renderMe() {
         document.getElementById("info-score").innerText = "—";
     }
     
+    // 计算总分并显示段位
+    const totalScore = me.scores ? Object.values(me.scores).reduce((a,b) => (a||0)+(b||0), 0) : 0;
+    const rank = getRank(totalScore);
+    document.getElementById("info-rank").innerHTML = rank;
+    
     const sportText = me.currentSport ? me.currentSport : "未选择";
     const statusText = me.currentStatus ? me.currentStatus : "在线";
     document.getElementById("info-status").innerHTML = `${sportText} · ${statusText} <button onclick="openStatusModal()" style="font-size:12px;padding:2px 8px;">设置</button>`;
@@ -116,8 +121,9 @@ function renderOnlineUsers() {
         const sportScore = (u.currentSport && u.scores && u.scores[u.currentSport]) ? u.scores[u.currentSport] : "—";
         card.innerHTML = `
             <h4>${u.name} (${u.gender}) <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background-color:${u.currentStatus === '在线' ? '#2ecc71' : (u.currentStatus === '等待匹配' ? '#f39c12' : (u.currentStatus === '游戏中' ? '#e74c3c' : '#95a5a6'))};margin-left:8px;"></span></h4>
+            <p>🏆 ${getRank(u.scores ? Object.values(u.scores).reduce((a,b) => (a||0)+(b||0), 0) : 0)}</p>
             <p>🎮 ${u.currentSport || "未选择"} · ${u.currentStatus || "在线"}</p>
-            <p>⭐ ${u.currentSport || "未选择"}积分：<span class="score-value">${sportScore}</span></p>
+            <p>⭐ ${u.currentSport || "未选择"}积分：<span class="score-value">${u.scores && u.scores[u.currentSport] ? u.scores[u.currentSport] : "—"}</span></p>
             <button onclick="sendInvite('${u.id}')">邀请搭子</button>
         `;
         box.appendChild(card);
@@ -589,4 +595,13 @@ function saveEditProfile() {
     renderMe();
     sendMeToServer();
     closeEditProfile();
+}
+
+function getRank(score) {
+    if (score < 200) return "🥉 青铜";
+    if (score < 500) return "🥈 白银";
+    if (score < 1000) return "🥇 黄金";
+    if (score < 2000) return "💎 铂金";
+    if (score < 3500) return "🔮 钻石";
+    return "👑 王者";
 }
