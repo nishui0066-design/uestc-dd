@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>消息 - 校搭联机版</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        body { background: #f5f7fa; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .chat-container {
+            display: flex;
+            gap: 20px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+        .chat-list {
+            width: 300px;
+            border-right: 1px solid #eee;
+            background: #fafafa;
+        }
+        .chat-list h4 {
+            padding: 15px;
+            margin: 0;
+            border-bottom: 1px solid #eee;
+        }
+        .chat-contact {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .chat-contact:hover {
+            background: #f0f0f0;
+        }
+        .chat-contact.active {
+            background: #e8edff;
+            border-left: 3px solid #5b78f5;
+        }
+        .chat-contact-name {
+            font-weight: bold;
+        }
+        .chat-contact-preview {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            min-height: 350px;
+        }
+        .chat-input-area {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .empty-chat {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+        .chat-msg {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            max-width: 70%;
+        }
+        .chat-msg.me {
+            background: #5b78f5;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        .chat-msg.other {
+            background: #f0f0f0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 导航栏 -->
+        <div id="nav-placeholder"></div>
+        
+        <!-- 页面标题 -->
+        <header style="text-align: center; margin-bottom: 20px;">
+            <h1>💬 消息</h1>
+            <p>与你的搭子聊天</p>
+        </header>
+        
+        <!-- 聊天容器 -->
+        <div class="chat-container">
+            <!-- 左侧聊天列表 -->
+            <div class="chat-list">
+                <h4>💬 聊天列表</h4>
+                <div id="chat-contact-list"></div>
+            </div>
+            
+            <!-- 右侧聊天区域 -->
+            <div class="chat-area">
+                <div class="chat-header" id="chat-header">选择一个聊天</div>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="empty-chat">👈 点击左侧联系人开始聊天</div>
+                </div>
+                <div class="chat-input-area" id="chat-input-area" style="display: none;">
+                    <input type="text" id="chat-input" placeholder="输入消息...">
+                    <button onclick="sendMessage()" class="btn-main">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 加载导航栏
+        fetch('/pages/nav.html')
+            .then(r => r.text())
+            .then(html => document.getElementById('nav-placeholder').innerHTML = html);
+        
+        // 检查登录
+        if (!localStorage.getItem("user")) {
+            window.location.href = "register.html";
+        }
+    </script>
+    <script src="../js/chat.js"></script>
+</body>
+</html>

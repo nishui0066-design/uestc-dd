@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>约局大厅 - 校搭联机版</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        body { background: #f5f7fa; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .party-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .filter-bar {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 导航栏 -->
+        <div id="nav-placeholder"></div>
+        
+        <!-- 页面标题 -->
+        <header style="text-align: center; margin-bottom: 20px;">
+            <h1>📢 约局大厅</h1>
+            <p>找到志同道合的球友/队友</p>
+        </header>
+        
+        <!-- 发起约局按钮 -->
+        <div style="text-align: right; margin-bottom: 15px;">
+            <button onclick="openCreateParty()" class="btn-main" style="padding: 10px 20px;">+ 发起约局</button>
+        </div>
+        
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <select id="party-filter-sport" style="padding: 8px;">
+                    <option value="">全部运动</option>
+                    <option value="足球">足球</option>
+                    <option value="篮球">篮球</option>
+                    <option value="羽毛球">羽毛球</option>
+                    <option value="游泳">游泳</option>
+                    <option value="王者荣耀">王者荣耀</option>
+                    <option value="瓦罗兰特">瓦罗兰特</option>
+                    <option value="LOL">LOL</option>
+                </select>
+                <select id="party-filter-status" style="padding: 8px;">
+                    <option value="">全部状态</option>
+                    <option value="招募中">招募中</option>
+                    <option value="已结束">已结束</option>
+                </select>
+                <button onclick="filterParties()" style="padding: 8px 15px;">🔍 筛选</button>
+                <button onclick="resetPartyFilter()" style="padding: 8px 15px;">🔄 重置</button>
+            </div>
+        </div>
+        
+        <!-- 约局列表 -->
+        <div id="party-list"></div>
+    </div>
+    
+    <!-- 发起约局弹窗 -->
+    <div id="party-modal" class="modal" style="display:none;">
+        <div class="modal-content" style="width:350px;">
+            <h3>📢 发起约局</h3>
+            <p>运动：</p>
+            <select id="party-sport" style="width:100%;padding:8px;margin-bottom:15px;">
+                <option value="足球">足球</option>
+                <option value="篮球">篮球</option>
+                <option value="羽毛球">羽毛球</option>
+                <option value="游泳">游泳</option>
+                <option value="王者荣耀">王者荣耀</option>
+                <option value="瓦罗兰特">瓦罗兰特</option>
+                <option value="LOL">LOL</option>
+                <option value="钢琴">钢琴</option>
+                <option value="吉他">吉他</option>
+                <option value="古筝">古筝</option>
+            </select>
+            <p>时间：</p>
+            <input type="datetime-local" id="party-time" style="width:100%;padding:8px;margin-bottom:15px;">
+            <p>地点：</p>
+            <input type="text" id="party-location" placeholder="例：操场/体育馆" style="width:100%;padding:8px;margin-bottom:15px;">
+            <div style="display:flex;gap:10px;">
+                <button onclick="createParty()" class="btn-main">发布</button>
+                <button onclick="closePartyModal()" class="btn-lose">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 加载导航栏
+        fetch('/pages/nav.html')
+            .then(r => r.text())
+            .then(html => document.getElementById('nav-placeholder').innerHTML = html);
+        
+        // 检查登录
+        if (!localStorage.getItem("user")) {
+            window.location.href = "register.html";
+        }
+    </script>
+    <script src="../js/party.js"></script>
+</body>
+</html>

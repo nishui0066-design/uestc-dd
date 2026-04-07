@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>我的 - 校搭联机版</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        body { background: #f5f7fa; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .info-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .info-item {
+            flex: 1;
+            min-width: 150px;
+        }
+        .section-title {
+            border-left: 4px solid #5b78f5;
+            padding-left: 12px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 导航栏 -->
+        <div id="nav-placeholder"></div>
+        
+        <!-- 页面标题 -->
+        <header style="text-align: center; margin-bottom: 20px;">
+            <h1>👤 我的空间</h1>
+            <p>管理个人信息和搭子</p>
+        </header>
+        
+        <!-- 个人信息卡片 -->
+        <div class="profile-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>📋 我的信息</h3>
+                <button onclick="openEditProfile()" style="padding: 5px 12px;">✏️ 编辑资料</button>
+            </div>
+            <div class="info-row">
+                <div class="info-item"><strong>昵称：</strong> <span id="info-name">-</span></div>
+                <div class="info-item"><strong>性别：</strong> <span id="info-gender">-</span></div>
+                <div class="info-item"><strong>段位：</strong> <span id="info-rank">-</span></div>
+                <div class="info-item"><strong>积分：</strong> <span id="info-score">-</span></div>
+            </div>
+            <div class="info-row">
+                <div class="info-item">
+                    <strong>当前状态：</strong> <span id="info-status">未设置</span>
+                    <button onclick="openStatusModal()" style="font-size:12px;padding:2px 8px;">设置</button>
+                </div>
+                <div class="info-item">
+                    <button onclick="showHistory()" style="margin-top:8px;">📜 活动记录</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 我的邀请卡片 -->
+        <div class="profile-card">
+            <h3 class="section-title">🔔 我的邀请 (<span id="req-count">0</span>)</h3>
+            <div id="incoming-requests"></div>
+        </div>
+        
+        <!-- 我的搭子卡片 -->
+        <div class="profile-card">
+            <h3 class="section-title">✅ 我的搭子</h3>
+            <div id="matched-list"></div>
+        </div>
+    </div>
+    
+    <!-- 编辑资料弹窗 -->
+    <div id="edit-profile-modal" class="modal" style="display:none;">
+        <div class="modal-content" style="width:350px;">
+            <h3>编辑资料</h3>
+            <p>昵称：</p>
+            <input type="text" id="edit-name" style="width:100%;padding:8px;margin-bottom:15px;">
+            <p>性别：</p>
+            <select id="edit-gender" style="width:100%;padding:8px;margin-bottom:15px;">
+                <option value="男">男</option>
+                <option value="女">女</option>
+            </select>
+            <div style="display:flex;gap:10px;">
+                <button onclick="saveEditProfile()" class="btn-main">保存</button>
+                <button onclick="closeEditProfile()" class="btn-lose">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 设置状态弹窗 -->
+    <div id="status-modal" class="modal" style="display:none;">
+        <div class="modal-content" style="width:350px;">
+            <h3>设置当前状态</h3>
+            <p>我想玩：</p>
+            <select id="sport-select" style="width:100%;padding:8px;margin:10px 0;"></select>
+            <p>状态：</p>
+            <select id="status-select" style="width:100%;padding:8px;margin:10px 0;"></select>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button onclick="saveStatus()" class="btn-main">保存</button>
+                <button onclick="closeStatusModal()" class="btn-lose">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 历史记录弹窗 -->
+    <div id="history-modal" class="modal" style="display:none;">
+        <div class="modal-content" style="width:350px;">
+            <h3>📜 我的活动记录</h3>
+            <div id="history-content" style="text-align:left;max-height:300px;overflow-y:auto;"></div>
+            <button onclick="closeHistoryModal()" class="btn-lose" style="margin-top:15px;">关闭</button>
+        </div>
+    </div>
+    
+    <script>
+        // 加载导航栏
+        fetch('/pages/nav.html')
+            .then(r => r.text())
+            .then(html => document.getElementById('nav-placeholder').innerHTML = html);
+        
+        // 检查登录
+        if (!localStorage.getItem("user")) {
+            window.location.href = "register.html";
+        }
+    </script>
+    <script src="../js/profile.js"></script>
+</body>
+</html>

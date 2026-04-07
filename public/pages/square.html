@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>广场 - 校搭联机版</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        body { background: #f5f7fa; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 导航栏 -->
+        <div id="nav-placeholder"></div>
+        
+        <!-- 页面标题 -->
+        <header style="text-align: center; margin-bottom: 20px;">
+            <h1>🏠 广场</h1>
+            <p>发现附近的运动搭子</p>
+        </header>
+        
+        <!-- 筛选栏 -->
+        <nav class="filter-bar">
+            <select id="filter-sport">
+                <option value="">所有运动</option>
+                <option value="足球">足球</option>
+                <option value="篮球">篮球</option>
+                <option value="羽毛球">羽毛球</option>
+                <option value="游泳">游泳</option>
+                <option value="王者荣耀">王者荣耀</option>
+                <option value="瓦罗兰特">瓦罗兰特</option>
+                <option value="LOL">LOL</option>
+                <option value="钢琴">钢琴</option>
+                <option value="吉他">吉他</option>
+                <option value="古筝">古筝</option>
+            </select>
+            <select id="filter-status">
+                <option value="">所有状态</option>
+                <option value="在线">在线</option>
+                <option value="等待匹配">等待匹配</option>
+                <option value="游戏中">游戏中</option>
+                <option value="休息中">休息中</option>
+            </select>
+            <button onclick="applyFilter()">🔍 筛选</button>
+            <button onclick="refreshOnlineUsers()">🔄 刷新</button>
+            <button onclick="smartMatch()">✨ 智能匹配</button>
+        </nav>
+        
+        <!-- 用户列表 -->
+        <div id="square" class="user-grid"></div>
+    </div>
+    
+    <!-- 用户详情弹窗 -->
+    <div id="user-detail-modal" class="modal">
+        <div class="modal-content" style="width:350px;">
+            <h3>📋 用户详情</h3>
+            <div id="user-detail-content" style="text-align:left;margin:15px 0;"></div>
+            <button onclick="closeUserDetailModal()" class="btn-lose">关闭</button>
+        </div>
+    </div>
+    
+    <script>
+        // 加载导航栏
+        fetch('/pages/nav.html')
+            .then(r => r.text())
+            .then(html => document.getElementById('nav-placeholder').innerHTML = html);
+        
+        // 检查登录
+        if (!localStorage.getItem("user")) {
+            window.location.href = "register.html";
+        }
+    </script>
+    <script src="../js/square.js"></script>
+</body>
+</html>

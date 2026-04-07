@@ -9,3 +9,6 @@ desktop.ini
 # 忽略IDE配置文件（VS Code/WebStorm等）
 .vscode/
 .idea/
+
+# 忽略数据文件（本地数据，不需要上传）
+data.json
