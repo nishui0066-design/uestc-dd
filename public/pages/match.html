@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搭线 - 校搭联机</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        body { 
+            background: linear-gradient(135deg, #f5f7fa, #e8eaf6); 
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px;
+        }
+        header { 
+            text-align: center; 
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        header h1 { 
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        header p { 
+            color: #666;
+            font-size: 1rem;
+        }
+        .profile-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        .profile-section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: #333;
+            border-left: 4px solid #5b78f5;
+            padding-left: 16px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: #f8fafc;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #5b78f5;
+            box-shadow: 0 0 0 3px rgba(91, 120, 245, 0.1);
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        .btn-save {
+            background: linear-gradient(135deg, #5b78f5, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(91, 120, 245, 0.3);
+        }
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(91, 120, 245, 0.4);
+        }
+        .users-section {
+            margin-top: 30px;
+        }
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .user-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        .user-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        .user-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .user-card p {
+            margin-bottom: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+        .user-card .info-item {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        .user-card .info-label {
+            width: 80px;
+            font-weight: 500;
+            color: #333;
+        }
+        .user-card .info-value {
+            flex: 1;
+            color: #666;
+        }
+        .user-card .self-desc {
+            margin-top: 16px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .user-card button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        .user-card button {
+            background: #5b78f5;
+            color: white;
+        }
+        .user-card button:hover {
+            background: #4c66d9;
+        }
+        .empty-tip {
+            color: #94a3b8;
+            text-align: center;
+            padding: 40px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 16px;
+            margin-top: 20px;
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            z-index: 99;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 导航栏 -->
+        <div id="nav-placeholder"></div>
+        
+        <!-- 页面标题 -->
+        <header>
+            <h1>💕 搭线</h1>
+            <p>帮助校内同学寻找男女朋友</p>
+        </header>
+        
+        <!-- 个人信息填写 -->
+        <div class="profile-section">
+            <h2>👤 完善个人信息</h2>
+            <div class="form-group">
+                <label for="match-age">年龄</label>
+                <input type="number" id="match-age" placeholder="请输入年龄">
+            </div>
+            <div class="form-group">
+                <label for="match-height">身高 (cm)</label>
+                <input type="number" id="match-height" placeholder="请输入身高">
+            </div>
+            <div class="form-group">
+                <label for="match-gender">性别</label>
+                <select id="match-gender">
+                    <option value="">请选择</option>
+                    <option value="男">男</option>
+                    <option value="女">女</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="match-personality">性格</label>
+                <input type="text" id="match-personality" placeholder="请描述你的性格">
+            </div>
+            <div class="form-group">
+                <label for="match-desc">自我叙述</label>
+                <textarea id="match-desc" placeholder="请详细介绍一下自己，包括兴趣爱好、理想型等"></textarea>
+            </div>
+            <button class="btn-save" onclick="saveMatchProfile()">💾 保存个人信息</button>
+        </div>
+        
+        <!-- 其他用户列表 -->
+        <div class="users-section">
+            <h2 style="text-align: center; margin-bottom: 20px; color: #333;">👥 其他用户</h2>
+            <div id="users-grid" class="users-grid"></div>
+        </div>
+    </div>
+    
+    <div id="toastMsg" class="toast-msg"></div>
+    
+    <script>
+        // 加载导航栏
+        fetch('/pages/nav.html')
+            .then(r => r.text())
+            .then(html => document.getElementById('nav-placeholder').innerHTML = html);
+        
+        // 检查登录
+        if (!localStorage.getItem("user")) {
+            window.location.href = "register.html";
+        }
+    </script>
+    <script src="../js/match.js"></script>
+</body>
+</html>

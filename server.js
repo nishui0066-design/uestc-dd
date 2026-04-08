@@ -47,6 +47,7 @@ function saveData() {
 
 // 路由配置
 app.get("/", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
+app.get("/match.html", (req, res) => res.sendFile("pages/match.html", { root: __dirname + "/public" }));
 app.get("/square.html", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
 app.get("/party.html", (req, res) => res.sendFile("pages/party.html", { root: __dirname + "/public" }));
 app.get("/profile.html", (req, res) => res.sendFile("pages/profile.html", { root: __dirname + "/public" }));
