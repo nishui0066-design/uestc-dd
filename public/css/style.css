@@ -88,3 +88,167 @@ button {
 .chat-msg { margin: 4px 0; }
 .chat-msg.me { text-align: right; color: #5b78f5; }
 .chat-msg.other { text-align: left; color: #333; }
+
+/* ========== 移动端适配 ========== */
+
+/* 基础设置 */
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: #f5f7fa;
+    font-size: 14px;
+}
+
+.container {
+    max-width: 100%;
+    padding: 12px;
+}
+
+/* 导航栏移动端样式 */
+#nav-placeholder div {
+    display: flex;
+    gap: 8px;
+    justify-content: space-around;
+    padding: 10px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+#nav-placeholder a {
+    flex: 1;
+    text-align: center;
+    padding: 10px 5px;
+    font-size: 14px;
+    border-radius: 25px;
+    text-decoration: none;
+    background: #f0f0f0;
+    color: #333;
+}
+
+#nav-placeholder a:first-child {
+    background: #5b78f5;
+    color: white;
+}
+
+/* 卡片样式优化 */
+.card, .party-card, .profile-card, .req-item {
+    border-radius: 16px;
+    padding: 15px;
+    margin-bottom: 12px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* 按钮增大点击区域 */
+button, .btn-main, .btn-lose, .btn-win {
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 25px;
+    cursor: pointer;
+    min-height: 44px;
+}
+
+/* 筛选栏移动端 */
+.filter-bar, .filter-bar div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.filter-bar select, .filter-bar button {
+    flex: 1;
+    min-width: 80px;
+    padding: 10px;
+    border-radius: 25px;
+}
+
+/* 用户网格 */
+.user-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+/* 约局列表 */
+#party-list .party-card {
+    margin-bottom: 12px;
+}
+
+/* 聊天页面移动端 */
+.chat-container {
+    flex-direction: column;
+    min-height: auto;
+}
+
+.chat-list {
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+}
+
+.chat-area {
+    min-height: 400px;
+}
+
+/* 弹窗移动端适配 */
+.modal-content {
+    width: 90% !important;
+    max-width: 400px;
+    margin: 20px auto;
+    border-radius: 20px;
+}
+
+/* 个人信息行 */
+.info-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.info-item {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* 按钮组 */
+.modal-btns, .btn-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* 平板适配 */
+@media (min-width: 768px) {
+    .container {
+        max-width: 750px;
+        margin: 0 auto;
+    }
+    
+    .user-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 桌面适配 */
+@media (min-width: 1024px) {
+    .container {
+        max-width: 1000px;
+    }
+    
+    .user-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}

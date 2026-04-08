@@ -135,38 +135,63 @@ function getFilteredUsers() {
     return list;
 }
 
+// 智能匹配（增强版）
 function smartMatch() {
     if (!me) return alert("请先注册");
-    fetch("/data").then(r => r.json()).then(data => {
-        const list = (data.onlineUsers || []).filter(u =>
-            u.id !== me.id && u.currentSport === me.currentSport && u.currentSport
-        );
+    
+    if (!me.currentSport) {
+        alert("请先在个人中心设置当前运动");
+        return;
+    }
+    
+    fetch("/smart-match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: me.id })
+    })
+    .then(r => r.json())
+    .then(list => {
         if (list.length === 0) {
-            alert("没有找到同类型的在线用户");
+            alert("暂无匹配的用户");
             return;
         }
+        
+        // 创建弹窗
         const modalHtml = `
             <div id="smart-match-modal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:1000;">
-                <div style="background:white;border-radius:15px;padding:20px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;">
-                    <h3>✨ 智能匹配推荐</h3>
+                <div style="background:white;border-radius:20px;padding:20px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;">
+                    <h3 style="margin-bottom:15px;">✨ 智能匹配推荐</h3>
+                    <p style="color:#666;margin-bottom:15px;">基于运动、段位、状态综合评分</p>
                     <div id="smart-match-list"></div>
-                    <button onclick="closeSmartMatch()" style="margin-top:15px;background:#95a5a6;">关闭</button>
+                    <button onclick="closeSmartMatch()" style="margin-top:15px;background:#95a5a6;padding:10px 20px;border:none;border-radius:25px;">关闭</button>
                 </div>
             </div>
         `;
         document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
         const listBox = document.getElementById("smart-match-list");
         list.forEach(u => {
             const card = document.createElement("div");
-            card.style.cssText = "border:1px solid #ddd;border-radius:8px;padding:10px;margin-bottom:10px;";
+            card.style.cssText = "border:1px solid #ddd;border-radius:12px;padding:15px;margin-bottom:12px;";
             const sportScore = (u.currentSport && u.scores && u.scores[u.currentSport]) ? u.scores[u.currentSport] : "—";
+            const totalScore = u.scores ? Object.values(u.scores).reduce((a,b) => (a||0)+(b||0), 0) : 0;
+            const rank = getRank(totalScore);
+            
             card.innerHTML = `
-                <h4>${u.name} (${u.gender})</h4>
-                <p>🎮 ${u.currentSport || "未选择"} · ${u.currentStatus || "在线"} | ${u.currentSport ? u.currentSport + "积分" : "积分"}:${sportScore}</p>
-                <button onclick="sendInvite('${u.id}');closeSmartMatch();">邀请搭子</button>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <h4 style="margin:0;">${u.name} (${u.gender})</h4>
+                    <span style="background:#5b78f5;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">匹配度 ${u.matchScore}</span>
+                </div>
+                <p style="margin:8px 0;">🎮 ${u.currentSport || "未选择"} · ${rank}</p>
+                <p style="margin:0 0 8px 0;">⭐ ${u.currentSport ? u.currentSport + "积分" : "积分"}: ${sportScore}</p>
+                <button onclick="sendInvite('${u.id}');closeSmartMatch();" style="background:#5b78f5;color:white;padding:8px 16px;border:none;border-radius:25px;">邀请搭子</button>
             `;
             listBox.appendChild(card);
         });
+    })
+    .catch(err => {
+        console.error("匹配失败:", err);
+        alert("匹配失败，请稍后重试");
     });
 }
 

@@ -15,7 +15,8 @@ let data = {
     matches: [],
     chatRecords: {},
     history: [],
-    parties: []
+    parties: [],
+    groups: []
 };
 
 if (fs.existsSync(DATA_FILE)) {
@@ -30,6 +31,7 @@ if (fs.existsSync(DATA_FILE)) {
         if (!data.userProfiles) data.userProfiles = [];  // ← 添加这行（可选）
         if (!data.invites) data.invites = [];  // ← 添加这行（可选）
         if (!data.matches) data.matches = [];  // ← 添加这行（可选）
+        if (!data.groups) data.groups = [];
         console.log("✅ 已加载历史数据");
     } catch(e) {
         console.log("加载数据失败，使用默认数据");
@@ -56,6 +58,10 @@ app.get("/activity.html", (req, res) => res.sendFile("pages/activity.html", { ro
 app.get("/register.html", (req, res) => res.sendFile("pages/register.html", { root: __dirname + "/public" }));
 app.get("/nav.html", (req, res) => res.sendFile("pages/nav.html", { root: __dirname + "/public" }));
 app.get("/data", (req, res) => res.json(data));
+app.get('/manifest.json', (req, res) => res.sendFile('manifest.json', { root: __dirname + '/public' }));
+app.get('/sw.js', (req, res) => res.sendFile('sw.js', { root: __dirname + '/public' }));
+app.get("/groups.html", (req, res) => res.sendFile("pages/groups.html", { root: __dirname + "/public" }));
+app.get("/group-chat.html", (req, res) => res.sendFile("pages/group-chat.html", { root: __dirname + "/public" }));
 
 app.post("/online", (req, res) => {
     const u = req.body;
@@ -187,4 +193,140 @@ app.post("/party/cancel", (req, res) => {
     res.sendStatus(200);
 });
 
+
+
+
+
+// 智能匹配算法（增强版）
+app.post("/smart-match", (req, res) => {
+    const { userId } = req.body;
+    
+    // 查找用户
+    const user = data.userProfiles.find(u => u.id === userId);
+    if (!user) {
+        return res.status(404).json({ error: "用户不存在" });
+    }
+    
+    // 获取所有在线用户（排除自己）
+    let candidates = data.onlineUsers.filter(u => u.id !== userId);
+    
+    // 计算每个候选人的匹配分数
+    const scored = candidates.map(candidate => {
+        let score = 0;
+        
+        // 1. 运动匹配（最高分）
+        if (candidate.currentSport && user.currentSport && 
+            candidate.currentSport === user.currentSport) {
+            score += 50;
+        }
+        
+        // 2. 段位相近（总分差越小分数越高）
+        const userTotal = user.scores ? Object.values(user.scores).reduce((a,b) => (a||0)+(b||0), 0) : 0;
+        const candTotal = candidate.scores ? Object.values(candidate.scores).reduce((a,b) => (a||0)+(b||0), 0) : 0;
+        const diff = Math.abs(userTotal - candTotal);
+        if (diff < 100) score += 30;
+        else if (diff < 300) score += 20;
+        else if (diff < 500) score += 10;
+        
+        // 3. 状态匹配（等待匹配加分）
+        if (candidate.currentStatus === "等待匹配") score += 20;
+        else if (candidate.currentStatus === "在线") score += 10;
+        
+        // 4. 历史搭子（如果是之前匹配过的搭子加分）
+        const isMatched = data.matches.some(m => 
+            (m.p1 === userId && m.p2 === candidate.id) || 
+            (m.p1 === candidate.id && m.p2 === userId)
+        );
+        if (isMatched) score += 15;
+        
+        // 5. 最近活跃（时间戳越近分数越高）
+        if (candidate.t) {
+            const minutesAgo = (Date.now() - candidate.t) / 60000;
+            if (minutesAgo < 5) score += 15;
+            else if (minutesAgo < 15) score += 10;
+            else if (minutesAgo < 30) score += 5;
+        }
+        
+        return { ...candidate, matchScore: score };
+    });
+    
+    // 按分数排序，取前10个
+    scored.sort((a, b) => b.matchScore - a.matchScore);
+    const topMatches = scored.slice(0, 10);
+    
+    res.json(topMatches);
+});
+
+// 创建群聊
+app.post("/group/create", (req, res) => {
+    const { groupName, creatorId, creatorName, sport } = req.body;
+    const newGroup = {
+        id: Date.now(),
+        groupName: groupName,
+        creatorId: creatorId,
+        creatorName: creatorName,
+        sport: sport || "综合",
+        members: [{ id: creatorId, name: creatorName }],
+        messages: [],
+        createdAt: Date.now()
+    };
+    data.groups.push(newGroup);
+    saveData();
+    res.json({ success: true, groupId: newGroup.id });
+});
+
+// 加入群聊
+app.post("/group/join", (req, res) => {
+    const { groupId, userId, userName } = req.body;
+   const group = data.groups.find(g => String(g.id) === String(groupId));
+    if (group && !group.members.some(m => m.id === userId)) {
+        group.members.push({ id: userId, name: userName });
+        saveData();
+        res.json({ success: true });
+    } else {
+        res.json({ success: false, message: "无法加入群聊" });
+    }
+});
+
+// 退出群聊
+app.post("/group/leave", (req, res) => {
+    const { groupId, userId } = req.body;
+    const group = data.groups.find(g => String(g.id) === String(groupId));
+    if (group) {
+        group.members = group.members.filter(m => m.id !== userId);
+        if (group.members.length === 0) {
+            data.groups = data.groups.filter(g => g.id !== groupId);
+        }
+        saveData();
+        res.json({ success: true });
+    } else {
+        res.json({ success: false });
+    }
+});
+
+/// 发送群聊消息
+app.post("/group/message", (req, res) => {
+    const { groupId, userId, userName, text } = req.body;
+    console.log("收到消息:", { groupId, userId, userName, text });
+    
+    const group = data.groups.find(g => String(g.id) === String(groupId));  // 修改这一行
+    console.log("找到的群组:", group);
+    
+    if (group) {
+        group.messages.push({
+            fromId: userId,
+            fromName: userName,
+            text: text,
+            time: Date.now()
+        });
+        saveData();
+        res.json({ success: true });
+    } else {
+        res.json({ success: false, message: "群组不存在" });
+    }
+});
+// 获取群聊列表
+app.get("/groups", (req, res) => {
+    res.json(data.groups || []);
+});
 app.listen(8080, () => console.log("校搭联机服务器启动：http://localhost:8080"));

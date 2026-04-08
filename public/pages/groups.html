@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>群聊大厅 - 校搭联机版</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <style>
+        .group-card {
+            background: white;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .group-card:active {
+            transform: scale(0.98);
+        }
+        .group-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .group-info {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            gap: 15px;
+            margin-top: 8px;
+        }
+        .create-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #5b78f5;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 20px;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(91,120,245,0.4);
+            cursor: pointer;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="nav-placeholder"></div>
+        
+        <header style="text-align: center; margin-bottom: 20px;">
+            <h1>👥 群聊大厅</h1>
+            <p>加入兴趣群组，认识更多朋友</p>
+        </header>
+        
+        <div id="group-list"></div>
+        
+        <button class="create-btn" onclick="openCreateGroup()">+ 创建群聊</button>
+    </div>
+
+    <!-- 创建群聊弹窗 -->
+    <div id="create-group-modal" class="modal" style="display:none;">
+        <div class="modal-content" style="width:350px;">
+            <h3>创建群聊</h3>
+            <p>群名称：</p>
+            <input type="text" id="group-name" placeholder="例：篮球爱好者群" style="width:100%;padding:10px;margin-bottom:15px;border:1px solid #ddd;border-radius:8px;">
+            <p>主题运动：</p>
+            <select id="group-sport" style="width:100%;padding:10px;margin-bottom:15px;border:1px solid #ddd;border-radius:8px;">
+                <option value="综合">综合</option>
+                <option value="足球">足球</option>
+                <option value="篮球">篮球</option>
+                <option value="羽毛球">羽毛球</option>
+                <option value="游泳">游泳</option>
+                <option value="王者荣耀">王者荣耀</option>
+                <option value="瓦罗兰特">瓦罗兰特</option>
+                <option value="LOL">LOL</option>
+            </select>
+            <div style="display:flex;gap:10px;">
+                <button onclick="createGroup()" class="btn-main">创建</button>
+                <button onclick="closeCreateModal()" class="btn-lose">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        fetch('/pages/nav.html')
+            .then(r => r.text())
+            .then(html => document.getElementById('nav-placeholder').innerHTML = html);
+        
+        if (!localStorage.getItem("user")) {
+            window.location.href = "register.html";
+        }
+    </script>
+    <script src="../js/groups.js"></script>
+</body>
+</html>

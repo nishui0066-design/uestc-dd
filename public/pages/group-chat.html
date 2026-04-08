@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>群聊 - 校搭联机版</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <style>
+        body {
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            background: white;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .group-title {
+            flex: 1;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .member-count {
+            font-size: 12px;
+            color: #666;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 75%;
+        }
+        .message.me {
+            align-items: flex-end;
+            margin-left: auto;
+        }
+        .message-other {
+            align-items: flex-start;
+        }
+        .message-name {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
+            padding-left: 8px;
+        }
+        .message-bubble {
+            background: white;
+            padding: 10px 14px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .message.me .message-bubble {
+            background: #5b78f5;
+            color: white;
+        }
+        .message-time {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 4px;
+            padding: 0 8px;
+        }
+        .chat-input-area {
+            background: white;
+            padding: 12px;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #eee;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 14px;
+        }
+        .chat-input-area button {
+            background: #5b78f5;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-header">
+        <button class="back-btn" onclick="goBack()">←</button>
+        <div class="group-title" id="group-title">加载中...</div>
+        <div class="member-count" id="member-count"></div>
+    </div>
+    
+    <div class="chat-messages" id="chat-messages">
+        <div style="text-align:center;color:#999;padding:50px;">加载消息中...</div>
+    </div>
+    
+    <div class="chat-input-area">
+        <input type="text" id="message-input" placeholder="输入消息..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()">发送</button>
+    </div>
+
+    <script>
+        let me = null;
+        let currentGroup = null;
+        let groupId = null;
+        
+        window.onload = () => {
+            const saved = localStorage.getItem("user");
+            if (!saved) {
+                window.location.href = "register.html";
+                return;
+            }
+            me = JSON.parse(saved);
+            
+            groupId = localStorage.getItem("currentGroupId");
+            if (!groupId) {
+                alert("群聊信息丢失");
+                window.location.href = "groups.html";
+                return;
+            }
+            
+            loadGroupInfo();
+            loadMessages();
+            setInterval(loadMessages, 3000);
+        };
+        
+        function loadGroupInfo() {
+            fetch("/groups")
+                .then(r => r.json())
+                .then(groups => {
+                    currentGroup = groups.find(g => g.id == groupId);
+                    if (currentGroup) {
+                        document.getElementById("group-title").innerText = currentGroup.groupName;
+                        document.getElementById("member-count").innerText = currentGroup.members.length + "人";
+                    } else {
+                        document.getElementById("group-title").innerText = "群聊不存在";
+                    }
+                });
+        }
+        
+        function loadMessages() {
+            fetch("/groups")
+                .then(r => r.json())
+                .then(groups => {
+                    const group = groups.find(g => g.id == groupId);
+                    if (group && group.messages) {
+                        console.log("加载到的消息:", group.messages);  // 添加调试
+                        renderMessages(group.messages);
+                    } else {
+                        console.log("没有找到群组或消息");
+                    }
+                })
+                .catch(err => console.error("加载消息失败:", err));
+        }
+        
+        function renderMessages(messages) {
+            const container = document.getElementById("chat-messages");
+            if (!messages || messages.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#999;padding:50px;">暂无消息，发送一条吧~</div>';
+                return;
+            }
+            
+            container.innerHTML = "";
+            messages.forEach(msg => {
+                const isMe = msg.fromId === me.id;
+                const div = document.createElement("div");
+                div.className = `message ${isMe ? 'me' : 'message-other'}`;
+                
+                const time = new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                div.innerHTML = `
+                    <div class="message-name">${isMe ? '我' : msg.fromName}</div>
+                    <div class="message-bubble">${escapeHtml(msg.text)}</div>
+                    <div class="message-time">${time}</div>
+                `;
+                container.appendChild(div);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById("message-input");
+            const text = input.value.trim();
+            if (!text || !currentGroup) return;
+            
+            fetch("/group/message", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    groupId: groupId,
+                    userId: me.id,
+                    userName: me.name,
+                    text: text
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = "";
+                    loadMessages();
+                }
+            });
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function goBack() {
+            localStorage.removeItem("currentGroupId");
+            window.location.href = "groups.html";
+        }
+    </script>
+</body>
+</html>

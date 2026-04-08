@@ -1,0 +1,10 @@
+{
+  "name": "校搭 - 校园运动搭子平台",
+  "short_name": "校搭",
+  "description": "找到你的运动搭子，一起组队活动",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#5b78f5",
+  "background_color": "#ffffff",
+  "orientation": "portrait"
+}
