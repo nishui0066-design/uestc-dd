@@ -2,23 +2,236 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>约局大厅 - 校搭联机版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>约局大厅 - 校搭联机</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        body { background: #f5f7fa; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .party-card {
-            background: white;
+        body { 
+            background: linear-gradient(135deg, #f5f7fa, #e8eaf6); 
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px;
+        }
+        header { 
+            text-align: center; 
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        header h1 { 
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        header p { 
+            color: #666;
+            font-size: 1rem;
+        }
+        .create-party-btn {
+            text-align: right; 
+            margin-bottom: 20px;
+        }
+        .create-party-btn button {
+            background: linear-gradient(135deg, #5b78f5, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 12px 24px;
             border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(91, 120, 245, 0.3);
+        }
+        .create-party-btn button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(91, 120, 245, 0.4);
         }
         .filter-bar {
             background: white;
-            padding: 15px;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .filter-bar div {
+            display: flex; 
+            gap: 15px; 
+            flex-wrap: wrap; 
+            align-items: center;
+            justify-content: center;
+        }
+        .filter-bar select, .filter-bar button {
+            padding: 12px 20px;
+            border: 1px solid #e2e8f0;
             border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .filter-bar select {
+            min-width: 180px;
+            background: #f8fafc;
+        }
+        .filter-bar button {
+            background: #5b78f5;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(91, 120, 245, 0.3);
+        }
+        .filter-bar button:hover {
+            background: #4c66d9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 120, 245, 0.4);
+        }
+        #party-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 20px;
+        }
+        .party-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
             margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        .party-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        .party-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .party-card p {
+            margin-bottom: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+        .party-card .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+        .party-card .status.recruiting {
+            background: #d9f99d;
+            color: #365314;
+        }
+        .party-card .status.ended {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+        .party-card button {
+            margin-right: 10px;
+            margin-top: 16px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .party-card button:first-of-type {
+            background: #5b78f5;
+            color: white;
+        }
+        .party-card button:first-of-type:hover {
+            background: #4c66d9;
+        }
+        .party-card button:last-of-type {
+            background: #f1f5f9;
+            color: #333;
+        }
+        .party-card button:last-of-type:hover {
+            background: #e2e8f0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 90%;
+        }
+        .modal-content h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .modal-content p {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        .modal-content select,
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            background: #f8fafc;
+        }
+        .modal-content input:focus,
+        .modal-content select:focus {
+            outline: none;
+            border-color: #5b78f5;
+            box-shadow: 0 0 0 3px rgba(91, 120, 245, 0.1);
+        }
+        .modal-content .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .modal-content button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .modal-content button:first-of-type {
+            background: linear-gradient(135deg, #5b78f5, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 12px rgba(91, 120, 245, 0.3);
+        }
+        .modal-content button:first-of-type:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(91, 120, 245, 0.4);
+        }
+        .modal-content button:last-of-type {
+            background: #f1f5f9;
+            color: #333;
+        }
+        .modal-content button:last-of-type:hover {
+            background: #e2e8f0;
         }
     </style>
 </head>
@@ -28,36 +241,41 @@
         <div id="nav-placeholder"></div>
         
         <!-- 页面标题 -->
-        <header style="text-align: center; margin-bottom: 20px;">
+        <header>
             <h1>📢 约局大厅</h1>
             <p>找到志同道合的球友/队友</p>
         </header>
         
         <!-- 发起约局按钮 -->
-        <div style="text-align: right; margin-bottom: 15px;">
-            <button onclick="openCreateParty()" class="btn-main" style="padding: 10px 20px;">+ 发起约局</button>
+        <div class="create-party-btn">
+            <button onclick="openCreateParty()">+ 发起约局</button>
         </div>
         
         <!-- 筛选栏 -->
         <div class="filter-bar">
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                <select id="party-filter-sport" style="padding: 8px;">
+            <div>
+                <select id="party-filter-sport">
                     <option value="">全部运动</option>
                     <option value="足球">足球</option>
                     <option value="篮球">篮球</option>
                     <option value="羽毛球">羽毛球</option>
                     <option value="游泳">游泳</option>
+                    <option value="跑步">跑步</option>
+                    <option value="乒乓球">乒乓球</option>
                     <option value="王者荣耀">王者荣耀</option>
                     <option value="瓦罗兰特">瓦罗兰特</option>
                     <option value="LOL">LOL</option>
+                    <option value="钢琴">钢琴</option>
+                    <option value="吉他">吉他</option>
+                    <option value="古筝">古筝</option>
                 </select>
-                <select id="party-filter-status" style="padding: 8px;">
+                <select id="party-filter-status">
                     <option value="">全部状态</option>
                     <option value="招募中">招募中</option>
                     <option value="已结束">已结束</option>
                 </select>
-                <button onclick="filterParties()" style="padding: 8px 15px;">🔍 筛选</button>
-                <button onclick="resetPartyFilter()" style="padding: 8px 15px;">🔄 重置</button>
+                <button onclick="filterParties()">🔍 筛选</button>
+                <button onclick="resetPartyFilter()">🔄 重置</button>
             </div>
         </div>
         
@@ -66,15 +284,17 @@
     </div>
     
     <!-- 发起约局弹窗 -->
-    <div id="party-modal" class="modal" style="display:none;">
-        <div class="modal-content" style="width:350px;">
+    <div id="party-modal" class="modal">
+        <div class="modal-content">
             <h3>📢 发起约局</h3>
             <p>运动：</p>
-            <select id="party-sport" style="width:100%;padding:8px;margin-bottom:15px;">
+            <select id="party-sport">
                 <option value="足球">足球</option>
                 <option value="篮球">篮球</option>
                 <option value="羽毛球">羽毛球</option>
                 <option value="游泳">游泳</option>
+                <option value="跑步">跑步</option>
+                <option value="乒乓球">乒乓球</option>
                 <option value="王者荣耀">王者荣耀</option>
                 <option value="瓦罗兰特">瓦罗兰特</option>
                 <option value="LOL">LOL</option>
@@ -83,12 +303,12 @@
                 <option value="古筝">古筝</option>
             </select>
             <p>时间：</p>
-            <input type="datetime-local" id="party-time" style="width:100%;padding:8px;margin-bottom:15px;">
+            <input type="datetime-local" id="party-time">
             <p>地点：</p>
-            <input type="text" id="party-location" placeholder="例：操场/体育馆" style="width:100%;padding:8px;margin-bottom:15px;">
-            <div style="display:flex;gap:10px;">
-                <button onclick="createParty()" class="btn-main">发布</button>
-                <button onclick="closePartyModal()" class="btn-lose">取消</button>
+            <input type="text" id="party-location" placeholder="例：操场/体育馆">
+            <div class="button-group">
+                <button onclick="createParty()">发布</button>
+                <button onclick="closePartyModal()">取消</button>
             </div>
         </div>
     </div>

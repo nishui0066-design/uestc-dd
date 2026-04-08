@@ -2,11 +2,171 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>广场 - 校搭联机版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>广场 - 校搭联机</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        body { background: #f5f7fa; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        body { 
+            background: linear-gradient(135deg, #f5f7fa, #e8eaf6); 
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px;
+        }
+        header { 
+            text-align: center; 
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        header h1 { 
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        header p { 
+            color: #666;
+            font-size: 1rem;
+        }
+        .filter-bar { 
+            display: flex; 
+            gap: 15px; 
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+        .filter-bar select, .filter-bar button {
+            padding: 12px 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .filter-bar select {
+            min-width: 180px;
+            background: #f8fafc;
+        }
+        .filter-bar button {
+            background: #5b78f5;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(91, 120, 245, 0.3);
+        }
+        .filter-bar button:hover {
+            background: #4c66d9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 120, 245, 0.4);
+        }
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        .card h4 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .card p {
+            margin-bottom: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+        .card button {
+            margin-right: 10px;
+            margin-top: 16px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .card button:first-of-type {
+            background: #5b78f5;
+            color: white;
+        }
+        .card button:first-of-type:hover {
+            background: #4c66d9;
+        }
+        .card button:last-of-type {
+            background: #f1f5f9;
+            color: #333;
+        }
+        .card button:last-of-type:hover {
+            background: #e2e8f0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 90%;
+        }
+        .modal-content h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .modal-content p {
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .modal-content ul {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+        .modal-content li {
+            margin-bottom: 6px;
+        }
+        .btn-lose {
+            width: 100%;
+            padding: 12px;
+            background: #94a3b8;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-lose:hover {
+            background: #64748b;
+        }
     </style>
 </head>
 <body>
@@ -15,7 +175,7 @@
         <div id="nav-placeholder"></div>
         
         <!-- 页面标题 -->
-        <header style="text-align: center; margin-bottom: 20px;">
+        <header>
             <h1>🏠 广场</h1>
             <p>发现附近的运动搭子</p>
         </header>
@@ -28,6 +188,8 @@
                 <option value="篮球">篮球</option>
                 <option value="羽毛球">羽毛球</option>
                 <option value="游泳">游泳</option>
+                <option value="跑步">跑步</option>
+                <option value="乒乓球">乒乓球</option>
                 <option value="王者荣耀">王者荣耀</option>
                 <option value="瓦罗兰特">瓦罗兰特</option>
                 <option value="LOL">LOL</option>
@@ -53,9 +215,9 @@
     
     <!-- 用户详情弹窗 -->
     <div id="user-detail-modal" class="modal">
-        <div class="modal-content" style="width:350px;">
+        <div class="modal-content">
             <h3>📋 用户详情</h3>
-            <div id="user-detail-content" style="text-align:left;margin:15px 0;"></div>
+            <div id="user-detail-content"></div>
             <button onclick="closeUserDetailModal()" class="btn-lose">关闭</button>
         </div>
     </div>

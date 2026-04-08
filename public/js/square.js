@@ -74,11 +74,13 @@ function renderOnlineUsers() {
         card.className = "card";
         const totalScore = u.scores ? Object.values(u.scores).reduce((a, b) => (a || 0) + (b || 0), 0) : 0;
         const sportScore = (u.currentSport && u.scores && u.scores[u.currentSport]) ? u.scores[u.currentSport] : "—";
+        const interestsText = u.interests && u.interests.length > 0 ? u.interests.join('、') : "未设置";
         card.innerHTML = `
             <h4>${u.name} (${u.gender}) <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background-color:${u.currentStatus === '在线' ? '#2ecc71' : (u.currentStatus === '等待匹配' ? '#f39c12' : (u.currentStatus === '游戏中' ? '#e74c3c' : '#95a5a6'))};margin-left:8px;"></span></h4>
             <p>🏆 ${getRank(totalScore)}</p>
             <p>🎮 ${u.currentSport || "未选择"} · ${u.currentStatus || "在线"}</p>
             <p>⭐ ${u.currentSport || "未选择"}积分：${sportScore}</p>
+            <p>✨ 兴趣：${interestsText}</p>
             <button onclick="sendInvite('${u.id}')">邀请搭子</button>
             <button onclick="showUserDetail('${u.id}')">查看详情</button>
         `;
@@ -117,7 +119,10 @@ function applyFilter() {
 function getFilteredUsers() {
     let list = onlineUsers.filter(u => u.id !== me.id);
     if (currentFilterSport) {
-        list = list.filter(u => u.currentSport === currentFilterSport);
+        list = list.filter(u => 
+            u.currentSport === currentFilterSport || 
+            (u.interests && u.interests.includes(currentFilterSport))
+        );
     }
     if (currentFilterStatus) {
         list = list.filter(u => u.currentStatus === currentFilterStatus);
@@ -185,11 +190,22 @@ function showUserDetail(pid) {
             } else {
                 scoresHtml = "<p>暂无运动记录</p>";
             }
+            let interestsHtml = "";
+            if (user.interests && user.interests.length > 0) {
+                interestsHtml = "<p><strong>兴趣爱好：</strong></p><ul>";
+                user.interests.forEach(interest => {
+                    interestsHtml += `<li>${interest}</li>`;
+                });
+                interestsHtml += "</ul>";
+            } else {
+                interestsHtml = "<p>暂无兴趣设置</p>";
+            }
             document.getElementById("user-detail-content").innerHTML = `
                 <p><strong>昵称：</strong>${user.name}</p>
                 <p><strong>性别：</strong>${user.gender}</p>
                 <p><strong>当前运动：</strong>${user.currentSport || "未选择"}</p>
                 <p><strong>当前状态：</strong>${user.currentStatus || "在线"}</p>
+                ${interestsHtml}
                 ${scoresHtml}
             `;
             document.getElementById("user-detail-modal").style.display = "flex";

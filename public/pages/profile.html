@@ -2,135 +2,595 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>我的 - 校搭联机版</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>我的信息 - 校搭联机</title>
     <style>
-        body { background: #f5f7fa; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .profile-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .info-row {
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fb, #e8eaf6);
+            padding-bottom: 70px;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px 16px 32px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 20px;
+            border-left: 4px solid #5b78f5;
+            padding-left: 16px;
+        }
+
+        .card-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .card-header span {
+            font-size: 0.75rem;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        .avatar {
+            width: 96px;
+            height: 96px;
+            background: linear-gradient(135deg, #5b78f5, #8b5cf6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 500;
+            box-shadow: 0 12px 24px rgba(91, 120, 245, 0.3);
+        }
+
+        .info-basic {
+            flex: 1;
+        }
+
+        .info-basic h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #0f172a;
+        }
+
+        .gender-badge {
+            background: #eef2ff;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #1e40af;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .current-sport {
+            font-size: 0.9rem;
+            background: #f1f5f9;
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 40px;
+            color: #334155;
+        }
+
+        .scores-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 20px;
-            margin-top: 15px;
+            gap: 16px;
+            margin-top: 12px;
         }
-        .info-item {
-            flex: 1;
-            min-width: 150px;
+
+        .score-item {
+            background: #f8fafc;
+            border-radius: 40px;
+            padding: 8px 20px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
         }
-        .section-title {
-            border-left: 4px solid #5b78f5;
-            padding-left: 12px;
-            margin-bottom: 15px;
+
+        .score-item:hover {
+            background: #eef2ff;
+            border-color: #5b78f5;
+        }
+
+        .score-item strong {
+            color: #5b78f5;
+            font-weight: 700;
+        }
+
+        .interests-section {
+            margin-top: 12px;
+        }
+
+        .interests-label {
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: block;
+            font-size: 1rem;
+            color: #1e293b;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f1f5f9;
+            padding: 10px 20px;
+            border-radius: 60px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+        .checkbox-group input {
+            width: 20px;
+            height: 20px;
+            accent-color: #5b78f5;
+            cursor: pointer;
+        }
+
+        .checkbox-group label:has(input:checked) {
+            background: #5b78f5;
+            color: white;
+            border-color: #5b78f5;
+            box-shadow: 0 4px 12px rgba(91, 120, 245, 0.3);
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #5b78f5, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(91, 120, 245, 0.3);
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(91, 120, 245, 0.4);
+        }
+
+        .match-list, .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .match-item, .history-item {
+            background: #f9fafc;
+            padding: 16px 20px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #eef2ff;
+            transition: all 0.3s ease;
+        }
+
+        .match-item:hover, .history-item:hover {
+            background: #f1f5f9;
+            border-color: #5b78f5;
+        }
+
+        .match-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .empty-tip {
+            color: #94a3b8;
+            text-align: center;
+            padding: 32px;
+            font-size: 0.9rem;
+            background: #f8fafc;
+            border-radius: 16px;
+            margin-top: 8px;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 16px 24px;
+            border-top: 1px solid #eef2ff;
+            max-width: 600px;
+            margin: 0 auto;
+            z-index: 10;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #5b78f5;
+        }
+
+        .nav-item:hover {
+            color: #5b78f5;
+            transform: translateY(-2px);
+        }
+
+        .nav-item span:first-child {
+            font-size: 1.6rem;
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            z-index: 99;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 导航栏 -->
-        <div id="nav-placeholder"></div>
-        
-        <!-- 页面标题 -->
-        <header style="text-align: center; margin-bottom: 20px;">
-            <h1>👤 我的空间</h1>
-            <p>管理个人信息和搭子</p>
-        </header>
-        
-        <!-- 个人信息卡片 -->
-        <div class="profile-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>📋 我的信息</h3>
-                <button onclick="openEditProfile()" style="padding: 5px 12px;">✏️ 编辑资料</button>
-            </div>
-            <div class="info-row">
-                <div class="info-item"><strong>昵称：</strong> <span id="info-name">-</span></div>
-                <div class="info-item"><strong>性别：</strong> <span id="info-gender">-</span></div>
-                <div class="info-item"><strong>段位：</strong> <span id="info-rank">-</span></div>
-                <div class="info-item"><strong>积分：</strong> <span id="info-score">-</span></div>
-            </div>
-            <div class="info-row">
-                <div class="info-item">
-                    <strong>当前状态：</strong> <span id="info-status">未设置</span>
-                    <button onclick="openStatusModal()" style="font-size:12px;padding:2px 8px;">设置</button>
-                </div>
-                <div class="info-item">
-                    <button onclick="showHistory()" style="margin-top:8px;">📜 活动记录</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 我的邀请卡片 -->
-        <div class="profile-card">
-            <h3 class="section-title">🔔 我的邀请 (<span id="req-count">0</span>)</h3>
-            <div id="incoming-requests"></div>
-        </div>
-        
-        <!-- 我的搭子卡片 -->
-        <div class="profile-card">
-            <h3 class="section-title">✅ 我的搭子</h3>
-            <div id="matched-list"></div>
-        </div>
-    </div>
-    
-    <!-- 编辑资料弹窗 -->
-    <div id="edit-profile-modal" class="modal" style="display:none;">
-        <div class="modal-content" style="width:350px;">
-            <h3>编辑资料</h3>
-            <p>昵称：</p>
-            <input type="text" id="edit-name" style="width:100%;padding:8px;margin-bottom:15px;">
-            <p>性别：</p>
-            <select id="edit-gender" style="width:100%;padding:8px;margin-bottom:15px;">
-                <option value="男">男</option>
-                <option value="女">女</option>
-            </select>
-            <div style="display:flex;gap:10px;">
-                <button onclick="saveEditProfile()" class="btn-main">保存</button>
-                <button onclick="closeEditProfile()" class="btn-lose">取消</button>
+<div class="container" id="app">
+    <div class="card">
+        <div class="profile-header">
+            <div class="avatar" id="avatar">👤</div>
+            <div class="info-basic">
+                <h1 id="userName">加载中...</h1>
+                <div><span class="gender-badge" id="userGender">--</span></div>
+                <div class="current-sport" id="currentSport">⚡ 当前运动: --</div>
             </div>
         </div>
     </div>
-    
-    <!-- 设置状态弹窗 -->
-    <div id="status-modal" class="modal" style="display:none;">
-        <div class="modal-content" style="width:350px;">
-            <h3>设置当前状态</h3>
-            <p>我想玩：</p>
-            <select id="sport-select" style="width:100%;padding:8px;margin:10px 0;"></select>
-            <p>状态：</p>
-            <select id="status-select" style="width:100%;padding:8px;margin:10px 0;"></select>
-            <div style="display:flex;gap:10px;margin-top:20px;">
-                <button onclick="saveStatus()" class="btn-main">保存</button>
-                <button onclick="closeStatusModal()" class="btn-lose">取消</button>
-            </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>🏆 运动积分</h2>
+            <span>比赛赢积分</span>
+        </div>
+        <div id="scoresContainer" class="scores-grid">
+            <div class="empty-tip">暂无积分记录</div>
         </div>
     </div>
-    
-    <!-- 历史记录弹窗 -->
-    <div id="history-modal" class="modal" style="display:none;">
-        <div class="modal-content" style="width:350px;">
-            <h3>📜 我的活动记录</h3>
-            <div id="history-content" style="text-align:left;max-height:300px;overflow-y:auto;"></div>
-            <button onclick="closeHistoryModal()" class="btn-lose" style="margin-top:15px;">关闭</button>
+
+    <!-- 多选兴趣卡片（已与广场兴趣列表同步） -->
+    <div class="card">
+        <div class="card-header">
+            <h2>✨ 我的兴趣</h2>
+            <span>可多选</span>
+        </div>
+        <div class="interests-section">
+            <div class="interests-label">🏅 选择你感兴趣的运动/活动（可多选）</div>
+            <div class="checkbox-group" id="interestsCheckboxGroup"></div>
+            <button class="btn-save" id="saveInterestsBtn">💾 保存兴趣设置</button>
         </div>
     </div>
-    
-    <script>
-        // 加载导航栏
-        fetch('/pages/nav.html')
-            .then(r => r.text())
-            .then(html => document.getElementById('nav-placeholder').innerHTML = html);
-        
-        // 检查登录
-        if (!localStorage.getItem("user")) {
-            window.location.href = "register.html";
+
+    <div class="card">
+        <div class="card-header">
+            <h2>🤝 我的运动搭子</h2>
+            <span>已配对好友</span>
+        </div>
+        <div id="matchesList" class="match-list">
+            <div class="empty-tip">暂无匹配的好友，去广场找搭子吧~</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>📜 历史战绩</h2>
+            <span>胜负记录</span>
+        </div>
+        <div id="historyList" class="history-list">
+            <div class="empty-tip">暂无对战记录，去约战一场吧！</div>
+        </div>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a href="/square.html" class="nav-item">🏠<span>广场</span></a>
+    <a href="/party.html" class="nav-item">👥<span>约局</span></a>
+    <a href="/profile.html" class="nav-item active">👤<span>我的</span></a>
+    <a href="/chat.html" class="nav-item">💬<span>消息</span></a>
+    <a href="/activity.html" class="nav-item">📅<span>活动</span></a>
+</div>
+<div id="toastMsg" class="toast-msg"></div>
+
+<script>
+    let currentUser = null;
+    // ！！！关键修改：与广场页面下拉框的兴趣选项保持完全一致（不含“所有运动”）
+    const allSportOptions = [
+        "足球", "篮球", "羽毛球", "游泳", "跑步", "乒乓球",
+        "王者荣耀", "瓦罗兰特", "LOL", "钢琴", "吉他", "古筝"
+    ];
+
+    function showToast(msg, duration = 2000) {
+        const toast = document.getElementById('toastMsg');
+        toast.textContent = msg;
+        toast.style.opacity = '1';
+        setTimeout(() => toast.style.opacity = '0', duration);
+    }
+
+    function getCurrentUserId() {
+        let userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+        if (!userId) {
+            const urlParams = new URLSearchParams(window.location.search);
+            userId = urlParams.get('userId');
+            if (userId) localStorage.setItem('userId', userId);
+            else {
+                console.warn('未检测到登录信息，使用默认测试用户ID: u1775132556152');
+                userId = 'u1775132556152';
+                showToast('未登录，展示示例数据，请先登录注册', 3000);
+            }
         }
-    </script>
-    <script src="../js/profile.js"></script>
+        return userId;
+    }
+
+    async function fetchData() {
+        const res = await fetch('/data');
+        if (!res.ok) throw new Error('获取数据失败');
+        return await res.json();
+    }
+
+    function getUserFromData(data, userId) {
+        let profile = data.userProfiles.find(u => u.id === userId);
+        if (!profile) profile = data.onlineUsers.find(u => u.id === userId);
+        if (!profile) return { id: userId, name: "新用户", gender: "保密", scores: {}, currentSport: "未选择", interests: [] };
+        if (!profile.interests) profile.interests = [];
+        if (!profile.scores) profile.scores = {};
+        return profile;
+    }
+
+    function renderBasicInfo(user) {
+        document.getElementById('userName').innerText = user.name || '无名氏';
+        document.getElementById('userGender').innerText = user.gender === '男' ? '♂ 男生' : (user.gender === '女' ? '♀ 女生' : '未设置');
+        document.getElementById('currentSport').innerText = user.currentSport ? `⚡ 当前运动: ${user.currentSport}` : '⚡ 当前运动: 未选择';
+        const avatarDiv = document.getElementById('avatar');
+        if (user.gender === '男') avatarDiv.innerText = '👨';
+        else if (user.gender === '女') avatarDiv.innerText = '👩';
+        else avatarDiv.innerText = '👤';
+    }
+
+    function renderScores(scores) {
+        const container = document.getElementById('scoresContainer');
+        if (!scores || Object.keys(scores).length === 0) {
+            container.innerHTML = '<div class="empty-tip">暂无运动积分，去约战赚积分吧~</div>';
+            return;
+        }
+        container.innerHTML = '';
+        for (const [sport, score] of Object.entries(scores)) {
+            const div = document.createElement('div');
+            div.className = 'score-item';
+            div.innerHTML = `<span>${sport}</span> <strong>${score}</strong> 分`;
+            container.appendChild(div);
+        }
+    }
+
+    function renderInterestsCheckbox(interestsArray) {
+        const group = document.getElementById('interestsCheckboxGroup');
+        group.innerHTML = '';
+        allSportOptions.forEach(sport => {
+            const isChecked = interestsArray.includes(sport);
+            const label = document.createElement('label');
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = sport;
+            cb.checked = isChecked;
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(sport));
+            group.appendChild(label);
+        });
+    }
+
+    function getSelectedInterests() {
+        const checkboxes = document.querySelectorAll('#interestsCheckboxGroup input[type="checkbox"]');
+        return Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+    }
+
+    async function saveUserInterests(selectedInterests) {
+        if (!currentUser) {
+            showToast('用户信息未加载，请稍后重试', 2000);
+            return false;
+        }
+        try {
+            const updatedUser = {
+                ...currentUser,
+                interests: selectedInterests,
+                t: Date.now(),
+                currentStatus: '在线'
+            };
+            if (!updatedUser.scores) updatedUser.scores = {};
+            const response = await fetch('/online', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedUser)
+            });
+            if (response.ok) {
+                currentUser.interests = selectedInterests;
+                showToast('兴趣已保存 ✅', 1500);
+                return true;
+            } else {
+                showToast('保存失败，请重试', 2000);
+                return false;
+            }
+        } catch (err) {
+            console.error('保存兴趣出错:', err);
+            showToast('网络错误，保存失败', 2000);
+            return false;
+        }
+    }
+
+    function renderMatches(data, userId) {
+        const container = document.getElementById('matchesList');
+        const relatedMatches = data.matches.filter(m => m.p1 === userId || m.p2 === userId);
+        if (relatedMatches.length === 0) {
+            container.innerHTML = '<div class="empty-tip">🤝 暂无运动搭子，快去广场邀请好友~</div>';
+            return;
+        }
+        container.innerHTML = '';
+        relatedMatches.forEach(match => {
+            const partnerId = match.p1 === userId ? match.p2 : match.p1;
+            const partnerProfile = data.userProfiles.find(p => p.id === partnerId) || { name: '未知用户' };
+            const partnerName = partnerProfile.name || partnerId.slice(0, 8);
+            const div = document.createElement('div');
+            div.className = 'match-item';
+            div.innerHTML = `<div class="match-name">🏅 ${partnerName}</div>
+                            <span style="font-size:0.75rem; background:#d9f99d; padding:6px 12px; border-radius:40px;">运动搭子</span>`;
+            container.appendChild(div);
+        });
+    }
+
+    function renderHistory(data, userId) {
+        const container = document.getElementById('historyList');
+        const userHistory = data.history.filter(h => h.winner === userId || h.loser === userId);
+        if (userHistory.length === 0) {
+            container.innerHTML = '<div class="empty-tip">📭 暂无比赛记录，去约战一场吧！</div>';
+            return;
+        }
+        container.innerHTML = '';
+        userHistory.forEach(record => {
+            const isWinner = record.winner === userId;
+            const opponentId = isWinner ? record.loser : record.winner;
+            const opponentProfile = data.userProfiles.find(p => p.id === opponentId) || { name: '对手' };
+            const opponentName = opponentProfile.name || opponentId.slice(0, 6);
+            const resultText = isWinner ? `战胜 ${opponentName}` : `负于 ${opponentName}`;
+            const scoreChange = isWinner ? `+${record.winnerScoreChange}` : `-${record.winnerScoreChange}`;
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `<div><strong>${record.sport}</strong><br>
+                            <span style="font-size:0.75rem;">${new Date(record.time).toLocaleString()}</span></div>
+                            <div style="text-align:right;"><span style="color:${isWinner ? '#16a34a' : '#dc2626'}">${resultText}</span>
+                            <div style="font-size:0.75rem;">积分 ${scoreChange}</div></div>`;
+            container.appendChild(div);
+        });
+    }
+
+    async function refreshAll() {
+        try {
+            const userId = getCurrentUserId();
+            const fullData = await fetchData();
+            const user = getUserFromData(fullData, userId);
+            if (!user) {
+                showToast('用户不存在，请重新登录', 2000);
+                return;
+            }
+            currentUser = user;
+            renderBasicInfo(user);
+            renderScores(user.scores || {});
+            renderInterestsCheckbox(user.interests || []);
+            renderMatches(fullData, userId);
+            renderHistory(fullData, userId);
+        } catch (error) {
+            console.error('加载页面数据失败', error);
+            showToast('数据加载失败，请刷新页面', 2000);
+        }
+    }
+
+    function bindSaveEvent() {
+        const saveBtn = document.getElementById('saveInterestsBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', async () => {
+                if (!currentUser) {
+                    showToast('用户信息尚未就绪，稍后再试', 1500);
+                    return;
+                }
+                const selected = getSelectedInterests();
+                await saveUserInterests(selected);
+                await refreshAll(); // 刷新以同步最新数据
+                showToast('兴趣同步成功！', 1200);
+            });
+        }
+    }
+
+    function syncLocalUserId() {
+        const userId = getCurrentUserId();
+        if (userId) localStorage.setItem('userId', userId);
+    }
+
+    (async function init() {
+        syncLocalUserId();
+        await refreshAll();
+        bindSaveEvent();
+        console.log('我的信息页面已加载，兴趣选项与广场完全一致 ✅');
+    })();
+</script>
 </body>
 </html>
