@@ -41,7 +41,6 @@ function loadChatData() {
         .then(data => {
             chatRecords = data.chatRecords || {};
             buildContactList();
-            renderContactList();
         });
 }
 
@@ -52,7 +51,6 @@ function syncChatData() {
         .then(data => {
             chatRecords = data.chatRecords || {};
             buildContactList();
-            renderContactList();
             if (currentChatId) {
                 renderChatMessages();
             }
@@ -60,49 +58,59 @@ function syncChatData() {
 }
 
 function buildContactList() {
-    // 从聊天记录中提取所有与当前用户聊过的人
-    const contactSet = new Set();
+    fetch("/chat/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: me.id })
+    })
+    .then(r => r.json())
+    .then(conversations => {
+        contacts = conversations;
+        renderContactList();
+    })
+    .catch(err => {
+        console.error("获取会话列表失败:", err);
+        // 降级方案：从聊天记录构建
+        buildContactListFromLocal();
+    });
+}
+
+// 降级方案：从本地聊天记录构建联系人列表
+function buildContactListFromLocal() {
+    const contactMap = new Map();
+    
     for (const [key, messages] of Object.entries(chatRecords)) {
         const [id1, id2] = key.split("-");
-        if (id1 === me.id) contactSet.add(id2);
-        if (id2 === me.id) contactSet.add(id1);
+        const otherId = id1 === me.id ? id2 : id1;
+        
+        if (!contactMap.has(otherId)) {
+            contactMap.set(otherId, {
+                otherId: otherId,
+                otherName: "加载中...",
+                lastMessage: "",
+                lastTime: 0,
+                unreadCount: 0
+            });
+        }
+        
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg && lastMsg.t > contactMap.get(otherId).lastTime) {
+            const contact = contactMap.get(otherId);
+            contact.lastMessage = lastMsg.text;
+            contact.lastTime = lastMsg.t;
+        }
     }
     
-    // 同时从搭子列表中获取联系人
+    // 获取用户名
     fetch("/data")
         .then(r => r.json())
         .then(data => {
-            const matches = data.matches || [];
-            const myMatches = matches.filter(m => m.p1 === me.id || m.p2 === me.id);
-            myMatches.forEach(m => {
-                const pid = m.p1 === me.id ? m.p2 : m.p1;
-                contactSet.add(pid);
-            });
-            
-            // 获取联系人详细信息
             const allUsers = [...data.onlineUsers, ...data.userProfiles];
-            const uniqueUsers = allUsers.filter((u, index, self) => 
-                index === self.findIndex(t => t.id === u.id)
-            );
-            
-            contacts = [];
-            for (const id of contactSet) {
-                const user = uniqueUsers.find(u => u.id === id);
-                if (user) {
-                    // 获取最后一条消息
-                    const key = [me.id, id].sort().join("-");
-                    const messages = chatRecords[key] || [];
-                    const lastMsg = messages[messages.length - 1];
-                    contacts.push({
-                        id: user.id,
-                        name: user.name,
-                        lastMessage: lastMsg ? lastMsg.text : "",
-                        lastTime: lastMsg ? lastMsg.t : 0
-                    });
-                }
+            for (const contact of contactMap.values()) {
+                const user = allUsers.find(u => u.id === contact.otherId);
+                if (user) contact.otherName = user.name;
             }
-            
-            // 按最后消息时间排序
+            contacts = Array.from(contactMap.values());
             contacts.sort((a, b) => b.lastTime - a.lastTime);
             renderContactList();
         });
@@ -121,12 +129,21 @@ function renderContactList() {
     contacts.forEach(contact => {
         const div = document.createElement("div");
         div.className = "chat-contact";
-        if (currentChatId === contact.id) div.classList.add("active");
+        if (currentChatId === contact.otherId) div.classList.add("active");
+        
+        const time = contact.lastTime ? new Date(contact.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+        
         div.innerHTML = `
-            <div class="chat-contact-name">${contact.name}</div>
-            <div class="chat-contact-preview">${contact.lastMessage ? contact.lastMessage.substring(0, 30) : "暂无消息"}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div class="chat-contact-name">${contact.otherName}</div>
+                <div style="font-size:10px;color:#999;">${time}</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div class="chat-contact-preview">${contact.lastMessage ? contact.lastMessage.substring(0, 30) : "暂无消息"}</div>
+                ${contact.unreadCount > 0 ? `<span style="background:#e74c3c;color:white;padding:2px 8px;border-radius:20px;font-size:10px;">${contact.unreadCount}</span>` : ''}
+            </div>
         `;
-        div.onclick = () => openChat(contact.id, contact.name);
+        div.onclick = () => openChat(contact.otherId, contact.otherName);
         container.appendChild(div);
     });
 }
@@ -134,6 +151,13 @@ function renderContactList() {
 function openChat(pid, name) {
     currentChatId = pid;
     currentChatName = name;
+    
+    // 标记已读
+    fetch("/read/private", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: me.id, fromId: pid })
+    });
     
     // 更新UI
     document.getElementById("chat-header").innerHTML = `💬 与 ${name} 聊天`;
@@ -163,7 +187,7 @@ function renderChatMessages() {
         const div = document.createElement("div");
         div.className = "chat-msg " + (msg.from === me.id ? "me" : "other");
         const time = new Date(msg.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        div.innerHTML = `<div>${msg.text}</div><div style="font-size:10px;opacity:0.7;">${time}</div>`;
+        div.innerHTML = `<div>${escapeHtml(msg.text)}</div><div style="font-size:10px;opacity:0.7;">${time}</div>`;
         container.appendChild(div);
     });
     container.scrollTop = container.scrollHeight;
@@ -185,11 +209,16 @@ function sendMessage() {
         })
     }).then(() => {
         input.value = "";
-        // 等待同步后刷新
         setTimeout(() => {
             syncChatData();
         }, 100);
     });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // 支持回车发送

@@ -329,4 +329,96 @@ app.post("/group/message", (req, res) => {
 app.get("/groups", (req, res) => {
     res.json(data.groups || []);
 });
+
+// 获取未读消息数（私聊）
+app.post("/unread/private", (req, res) => {
+    const { userId } = req.body;
+    let unreadCount = 0;
+    
+    for (const [key, messages] of Object.entries(data.chatRecords)) {
+        const [id1, id2] = key.split("-");
+        if (id2 === userId) {  // 对方发给我的消息
+            const lastRead = data.lastRead?.[userId]?.[id1] || 0;
+            const newMessages = messages.filter(m => m.from === id1 && m.t > lastRead);
+            unreadCount += newMessages.length;
+        }
+    }
+    res.json({ count: unreadCount });
+});
+
+// 获取未读群消息数
+app.post("/unread/group", (req, res) => {
+    const { userId } = req.body;
+    let unreadCount = 0;
+    
+    for (const group of data.groups) {
+        if (group.members.some(m => m.id === userId)) {
+            const lastRead = data.groupLastRead?.[userId]?.[group.id] || 0;
+            const newMessages = group.messages.filter(m => m.time > lastRead);
+            unreadCount += newMessages.length;
+        }
+    }
+    res.json({ count: unreadCount });
+});
+
+// 标记私聊已读
+app.post("/read/private", (req, res) => {
+    const { userId, fromId } = req.body;
+    if (!data.lastRead) data.lastRead = {};
+    if (!data.lastRead[userId]) data.lastRead[userId] = {};
+    data.lastRead[userId][fromId] = Date.now();
+    saveData();
+    res.json({ success: true });
+});
+
+// 标记群聊已读
+app.post("/read/group", (req, res) => {
+    const { userId, groupId } = req.body;
+    if (!data.groupLastRead) data.groupLastRead = {};
+    if (!data.groupLastRead[userId]) data.groupLastRead[userId] = {};
+    data.groupLastRead[userId][groupId] = Date.now();
+    saveData();
+    res.json({ success: true });
+});
+
+// 获取所有私聊会话及未读数
+app.post("/chat/conversations", (req, res) => {
+    const { userId } = req.body;
+    const conversations = [];
+    const userMap = new Map();
+    
+    // 收集所有用户信息
+    for (const user of data.userProfiles) {
+        userMap.set(user.id, user);
+    }
+    
+    // 遍历所有聊天记录
+    for (const [key, messages] of Object.entries(data.chatRecords)) {
+        const [id1, id2] = key.split("-");
+        let otherId = null;
+        if (id1 === userId) otherId = id2;
+        if (id2 === userId) otherId = id1;
+        
+        if (otherId) {
+            const lastMessage = messages[messages.length - 1];
+            const lastRead = data.lastRead?.[userId]?.[otherId] || 0;
+            const unreadCount = messages.filter(m => m.from === otherId && m.t > lastRead).length;
+            
+            const otherUser = userMap.get(otherId) || { name: "未知用户", id: otherId };
+            
+            conversations.push({
+                otherId: otherId,
+                otherName: otherUser.name,
+                lastMessage: lastMessage?.text || "",
+                lastTime: lastMessage?.t || 0,
+                unreadCount: unreadCount
+            });
+        }
+    }
+    
+    // 按最后消息时间排序
+    conversations.sort((a, b) => b.lastTime - a.lastTime);
+    res.json(conversations);
+});
+
 app.listen(8080, () => console.log("校搭联机服务器启动：http://localhost:8080"));

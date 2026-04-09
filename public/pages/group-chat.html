@@ -158,6 +158,7 @@
                     if (currentGroup) {
                         document.getElementById("group-title").innerText = currentGroup.groupName;
                         document.getElementById("member-count").innerText = currentGroup.members.length + "人";
+                        markGroupRead(groupId);
                     } else {
                         document.getElementById("group-title").innerText = "群聊不存在";
                     }
@@ -243,6 +244,18 @@
         function goBack() {
             localStorage.removeItem("currentGroupId");
             window.location.href = "groups.html";
+        }
+
+        // 标记群聊已读
+        function markGroupRead(groupId) {
+            const userId = me ? me.id : null;
+            if (!userId) return;
+    
+            fetch("/read/group", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: userId, groupId: groupId })
+        });
         }
     </script>
 </body>
