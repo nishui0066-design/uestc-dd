@@ -60,8 +60,10 @@ function filterParties() {
 function resetPartyFilter() {
     document.getElementById("party-filter-sport").value = "";
     document.getElementById("party-filter-status").value = "";
+    document.getElementById("party-search").value = "";
     currentPartyFilterSport = "";
     currentPartyFilterStatus = "";
+    partySearchKeyword = "";
     renderParties();
 }
 
@@ -77,6 +79,15 @@ function renderParties() {
         filteredParties = filteredParties.filter(p => p.status === currentPartyFilterStatus);
     }
     
+    // 搜索过滤
+    if (partySearchKeyword) {
+        filteredParties = filteredParties.filter(p => 
+            p.location.toLowerCase().includes(partySearchKeyword) ||
+            p.sport.toLowerCase().includes(partySearchKeyword) ||
+            p.creatorName.toLowerCase().includes(partySearchKeyword)
+        );
+    }
+
     if (filteredParties.length === 0) {
         box.innerHTML = "<p>暂无约局，快来发起一个吧</p>";
         return;
@@ -86,7 +97,12 @@ function renderParties() {
     filteredParties.forEach(p => {
         const div = document.createElement("div");
         div.className = "party-card";
-        
+        div.style.cursor = "pointer";
+        div.onclick = (e) => {
+            if (e.target.tagName === 'BUTTON') return;
+            window.location.href = `/party-detail.html?id=${p.id}`;
+        };
+
         const isJoined = p.players.includes(me.id);
         const isCreator = p.creator === me.id;
         
@@ -192,4 +208,13 @@ function cancelParty(partyId) {
             alert("约局已取消");
         });
     }
+}
+
+// 搜索关键词
+let partySearchKeyword = "";
+
+// 搜索约局
+function searchParties() {
+    partySearchKeyword = document.getElementById("party-search").value.trim().toLowerCase();
+    renderParties();
 }

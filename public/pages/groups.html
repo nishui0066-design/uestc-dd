@@ -61,6 +61,9 @@
         <button class="create-btn" onclick="openCreateGroup()">+ 创建群聊</button>
     </div>
 
+    <div style="margin-bottom: 15px;">
+    <input type="text" id="group-search" placeholder="🔍 搜索群聊（群名/运动）" style="width: 100%; padding: 12px; border-radius: 25px; border: 1px solid #ddd; font-size: 14px;" onkeyup="searchGroups()">
+    </div>
     <!-- 创建群聊弹窗 -->
     <div id="create-group-modal" class="modal" style="display:none;">
         <div class="modal-content" style="width:350px;">

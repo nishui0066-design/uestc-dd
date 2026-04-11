@@ -119,13 +119,14 @@ function applyFilter() {
 function getFilteredUsers() {
     let list = onlineUsers.filter(u => u.id !== me.id);
     if (currentFilterSport) {
-        list = list.filter(u => 
-            u.currentSport === currentFilterSport || 
-            (u.interests && u.interests.includes(currentFilterSport))
-        );
+        list = list.filter(u => u.currentSport === currentFilterSport);
     }
     if (currentFilterStatus) {
         list = list.filter(u => u.currentStatus === currentFilterStatus);
+    }
+    // 添加搜索过滤
+    if (userSearchKeyword) {
+        list = list.filter(u => u.name.toLowerCase().includes(userSearchKeyword));
     }
     list.sort((a, b) => {
         const scoreA = (a.currentSport && a.scores && a.scores[a.currentSport]) ? a.scores[a.currentSport] : 0;
@@ -242,4 +243,13 @@ function showUserDetail(pid) {
 
 function closeUserDetailModal() {
     document.getElementById("user-detail-modal").style.display = "none";
+}
+
+// 搜索关键词
+let userSearchKeyword = "";
+
+// 搜索用户
+function searchUsers() {
+    userSearchKeyword = document.getElementById("user-search").value.trim().toLowerCase();
+    renderOnlineUsers();
 }

@@ -1,8 +1,7 @@
 const express = require("express");
-const fs = require("fs");  // 新增
+const fs = require("fs");
 const app = express();
 app.use(express.json());
-app.use(express.static(__dirname + "/public"));
 
 // 数据文件路径
 const DATA_FILE = "./data.json";
@@ -23,14 +22,13 @@ if (fs.existsSync(DATA_FILE)) {
     try {
         const saved = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
         data = saved;
-        // 确保所有字段都存在（防止旧数据缺少字段）
         if (!data.history) data.history = [];
-        if (!data.parties) data.parties = [];  // ← 添加这行
-        if (!data.chatRecords) data.chatRecords = {};  // ← 添加这行（可选）
-        if (!data.onlineUsers) data.onlineUsers = [];  // ← 添加这行（可选）
-        if (!data.userProfiles) data.userProfiles = [];  // ← 添加这行（可选）
-        if (!data.invites) data.invites = [];  // ← 添加这行（可选）
-        if (!data.matches) data.matches = [];  // ← 添加这行（可选）
+        if (!data.parties) data.parties = [];
+        if (!data.chatRecords) data.chatRecords = {};
+        if (!data.onlineUsers) data.onlineUsers = [];
+        if (!data.userProfiles) data.userProfiles = [];
+        if (!data.invites) data.invites = [];
+        if (!data.matches) data.matches = [];
         if (!data.groups) data.groups = [];
         console.log("✅ 已加载历史数据");
     } catch(e) {
@@ -38,30 +36,33 @@ if (fs.existsSync(DATA_FILE)) {
     }
 }
 
-// 保存数据函数
 function saveData() {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     console.log("💾 数据已保存");
 }
 
+// ========== 静态文件（放在API路由之后） ==========
+app.use(express.static(__dirname + "/public"));
 
+// ========== API 路由（全部放在静态文件之前） ==========
 
+// 获取单个约局详情（必须放在 static 之前）
+app.get("/api/party/:id", (req, res) => {
+    const partyId = parseInt(req.params.id);
+    const party = data.parties.find(p => p.id === partyId);
+    if (party) {
+        const membersWithInfo = party.players.map(pid => {
+            const user = data.userProfiles.find(u => u.id === pid);
+            return user || { id: pid, name: "未知用户" };
+        });
+        res.json({ ...party, membersDetail: membersWithInfo });
+    } else {
+        res.status(404).json({ error: "约局不存在" });
+    }
+});
 
-// 路由配置
-app.get("/", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
-app.get("/match.html", (req, res) => res.sendFile("pages/match.html", { root: __dirname + "/public" }));
-app.get("/square.html", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
-app.get("/party.html", (req, res) => res.sendFile("pages/party.html", { root: __dirname + "/public" }));
-app.get("/profile.html", (req, res) => res.sendFile("pages/profile.html", { root: __dirname + "/public" }));
-app.get("/chat.html", (req, res) => res.sendFile("pages/chat.html", { root: __dirname + "/public" }));
-app.get("/activity.html", (req, res) => res.sendFile("pages/activity.html", { root: __dirname + "/public" }));
-app.get("/register.html", (req, res) => res.sendFile("pages/register.html", { root: __dirname + "/public" }));
-app.get("/nav.html", (req, res) => res.sendFile("pages/nav.html", { root: __dirname + "/public" }));
 app.get("/data", (req, res) => res.json(data));
-app.get('/manifest.json', (req, res) => res.sendFile('manifest.json', { root: __dirname + '/public' }));
-app.get('/sw.js', (req, res) => res.sendFile('sw.js', { root: __dirname + '/public' }));
-app.get("/groups.html", (req, res) => res.sendFile("pages/groups.html", { root: __dirname + "/public" }));
-app.get("/group-chat.html", (req, res) => res.sendFile("pages/group-chat.html", { root: __dirname + "/public" }));
+app.get("/groups", (req, res) => res.json(data.groups || []));
 
 app.post("/online", (req, res) => {
     const u = req.body;
@@ -70,7 +71,6 @@ app.post("/online", (req, res) => {
     if (idx >= 0) data.onlineUsers[idx] = u;
     else data.onlineUsers.push(u);
     
-    // 保存用户档案
     const profileIdx = data.userProfiles.findIndex(p => p.id === u.id);
     if (profileIdx >= 0) data.userProfiles[profileIdx] = u;
     else data.userProfiles.push(u);
@@ -103,7 +103,6 @@ app.post("/match", (req, res) => {
     }
     res.sendStatus(200);
 });
-
 
 app.post("/chat", (req, res) => {
     const {from,to,text} = req.body;
@@ -164,7 +163,6 @@ app.post("/party/join", (req, res) => {
     res.sendStatus(200);
 });
 
-// 退出约局
 app.post("/party/leave", (req, res) => {
     const { partyId, userId } = req.body;
     const party = data.parties.find(p => p.id === partyId);
@@ -182,7 +180,6 @@ app.post("/party/leave", (req, res) => {
     res.sendStatus(200);
 });
 
-// 取消约局
 app.post("/party/cancel", (req, res) => {
     const { partyId, userId } = req.body;
     const party = data.parties.find(p => p.id === partyId);
@@ -193,71 +190,45 @@ app.post("/party/cancel", (req, res) => {
     res.sendStatus(200);
 });
 
-
-
-
-
-// 智能匹配算法（增强版）
 app.post("/smart-match", (req, res) => {
     const { userId } = req.body;
-    
-    // 查找用户
     const user = data.userProfiles.find(u => u.id === userId);
     if (!user) {
         return res.status(404).json({ error: "用户不存在" });
     }
     
-    // 获取所有在线用户（排除自己）
     let candidates = data.onlineUsers.filter(u => u.id !== userId);
-    
-    // 计算每个候选人的匹配分数
     const scored = candidates.map(candidate => {
         let score = 0;
-        
-        // 1. 运动匹配（最高分）
         if (candidate.currentSport && user.currentSport && 
             candidate.currentSport === user.currentSport) {
             score += 50;
         }
-        
-        // 2. 段位相近（总分差越小分数越高）
         const userTotal = user.scores ? Object.values(user.scores).reduce((a,b) => (a||0)+(b||0), 0) : 0;
         const candTotal = candidate.scores ? Object.values(candidate.scores).reduce((a,b) => (a||0)+(b||0), 0) : 0;
         const diff = Math.abs(userTotal - candTotal);
         if (diff < 100) score += 30;
         else if (diff < 300) score += 20;
         else if (diff < 500) score += 10;
-        
-        // 3. 状态匹配（等待匹配加分）
         if (candidate.currentStatus === "等待匹配") score += 20;
         else if (candidate.currentStatus === "在线") score += 10;
-        
-        // 4. 历史搭子（如果是之前匹配过的搭子加分）
         const isMatched = data.matches.some(m => 
             (m.p1 === userId && m.p2 === candidate.id) || 
             (m.p1 === candidate.id && m.p2 === userId)
         );
         if (isMatched) score += 15;
-        
-        // 5. 最近活跃（时间戳越近分数越高）
         if (candidate.t) {
             const minutesAgo = (Date.now() - candidate.t) / 60000;
             if (minutesAgo < 5) score += 15;
             else if (minutesAgo < 15) score += 10;
             else if (minutesAgo < 30) score += 5;
         }
-        
         return { ...candidate, matchScore: score };
     });
-    
-    // 按分数排序，取前10个
     scored.sort((a, b) => b.matchScore - a.matchScore);
-    const topMatches = scored.slice(0, 10);
-    
-    res.json(topMatches);
+    res.json(scored.slice(0, 10));
 });
 
-// 创建群聊
 app.post("/group/create", (req, res) => {
     const { groupName, creatorId, creatorName, sport } = req.body;
     const newGroup = {
@@ -275,10 +246,9 @@ app.post("/group/create", (req, res) => {
     res.json({ success: true, groupId: newGroup.id });
 });
 
-// 加入群聊
 app.post("/group/join", (req, res) => {
     const { groupId, userId, userName } = req.body;
-   const group = data.groups.find(g => String(g.id) === String(groupId));
+    const group = data.groups.find(g => String(g.id) === String(groupId));
     if (group && !group.members.some(m => m.id === userId)) {
         group.members.push({ id: userId, name: userName });
         saveData();
@@ -288,7 +258,6 @@ app.post("/group/join", (req, res) => {
     }
 });
 
-// 退出群聊
 app.post("/group/leave", (req, res) => {
     const { groupId, userId } = req.body;
     const group = data.groups.find(g => String(g.id) === String(groupId));
@@ -304,14 +273,9 @@ app.post("/group/leave", (req, res) => {
     }
 });
 
-/// 发送群聊消息
 app.post("/group/message", (req, res) => {
     const { groupId, userId, userName, text } = req.body;
-    console.log("收到消息:", { groupId, userId, userName, text });
-    
-    const group = data.groups.find(g => String(g.id) === String(groupId));  // 修改这一行
-    console.log("找到的群组:", group);
-    
+    const group = data.groups.find(g => String(g.id) === String(groupId));
     if (group) {
         group.messages.push({
             fromId: userId,
@@ -325,19 +289,13 @@ app.post("/group/message", (req, res) => {
         res.json({ success: false, message: "群组不存在" });
     }
 });
-// 获取群聊列表
-app.get("/groups", (req, res) => {
-    res.json(data.groups || []);
-});
 
-// 获取未读消息数（私聊）
 app.post("/unread/private", (req, res) => {
     const { userId } = req.body;
     let unreadCount = 0;
-    
     for (const [key, messages] of Object.entries(data.chatRecords)) {
         const [id1, id2] = key.split("-");
-        if (id2 === userId) {  // 对方发给我的消息
+        if (id2 === userId) {
             const lastRead = data.lastRead?.[userId]?.[id1] || 0;
             const newMessages = messages.filter(m => m.from === id1 && m.t > lastRead);
             unreadCount += newMessages.length;
@@ -346,11 +304,9 @@ app.post("/unread/private", (req, res) => {
     res.json({ count: unreadCount });
 });
 
-// 获取未读群消息数
 app.post("/unread/group", (req, res) => {
     const { userId } = req.body;
     let unreadCount = 0;
-    
     for (const group of data.groups) {
         if (group.members.some(m => m.id === userId)) {
             const lastRead = data.groupLastRead?.[userId]?.[group.id] || 0;
@@ -361,7 +317,6 @@ app.post("/unread/group", (req, res) => {
     res.json({ count: unreadCount });
 });
 
-// 标记私聊已读
 app.post("/read/private", (req, res) => {
     const { userId, fromId } = req.body;
     if (!data.lastRead) data.lastRead = {};
@@ -371,7 +326,6 @@ app.post("/read/private", (req, res) => {
     res.json({ success: true });
 });
 
-// 标记群聊已读
 app.post("/read/group", (req, res) => {
     const { userId, groupId } = req.body;
     if (!data.groupLastRead) data.groupLastRead = {};
@@ -381,31 +335,23 @@ app.post("/read/group", (req, res) => {
     res.json({ success: true });
 });
 
-// 获取所有私聊会话及未读数
 app.post("/chat/conversations", (req, res) => {
     const { userId } = req.body;
     const conversations = [];
     const userMap = new Map();
-    
-    // 收集所有用户信息
     for (const user of data.userProfiles) {
         userMap.set(user.id, user);
     }
-    
-    // 遍历所有聊天记录
     for (const [key, messages] of Object.entries(data.chatRecords)) {
         const [id1, id2] = key.split("-");
         let otherId = null;
         if (id1 === userId) otherId = id2;
         if (id2 === userId) otherId = id1;
-        
         if (otherId) {
             const lastMessage = messages[messages.length - 1];
             const lastRead = data.lastRead?.[userId]?.[otherId] || 0;
             const unreadCount = messages.filter(m => m.from === otherId && m.t > lastRead).length;
-            
             const otherUser = userMap.get(otherId) || { name: "未知用户", id: otherId };
-            
             conversations.push({
                 otherId: otherId,
                 otherName: otherUser.name,
@@ -415,10 +361,24 @@ app.post("/chat/conversations", (req, res) => {
             });
         }
     }
-    
-    // 按最后消息时间排序
     conversations.sort((a, b) => b.lastTime - a.lastTime);
     res.json(conversations);
 });
 
-app.listen(8080, () => console.log("校搭联机服务器启动：http://localhost:8080"));
+// ========== 页面路由 ==========
+app.get("/", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
+app.get("/square.html", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
+app.get("/party.html", (req, res) => res.sendFile("pages/party.html", { root: __dirname + "/public" }));
+app.get("/profile.html", (req, res) => res.sendFile("pages/profile.html", { root: __dirname + "/public" }));
+app.get("/chat.html", (req, res) => res.sendFile("pages/chat.html", { root: __dirname + "/public" }));
+app.get("/activity.html", (req, res) => res.sendFile("pages/activity.html", { root: __dirname + "/public" }));
+app.get("/register.html", (req, res) => res.sendFile("pages/register.html", { root: __dirname + "/public" }));
+app.get("/nav.html", (req, res) => res.sendFile("pages/nav.html", { root: __dirname + "/public" }));
+app.get("/groups.html", (req, res) => res.sendFile("pages/groups.html", { root: __dirname + "/public" }));
+app.get("/group-chat.html", (req, res) => res.sendFile("pages/group-chat.html", { root: __dirname + "/public" }));
+app.get("/party-detail.html", (req, res) => res.sendFile("pages/party-detail.html", { root: __dirname + "/public" }));
+app.get("/manifest.json", (req, res) => res.sendFile("manifest.json", { root: __dirname + "/public" }));
+app.get("/sw.js", (req, res) => res.sendFile("sw.js", { root: __dirname + "/public" }));
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => console.log(`校搭联机服务器启动：http://localhost:${PORT}`));

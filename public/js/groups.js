@@ -26,7 +26,15 @@ function renderGroupList() {
     const container = document.getElementById("group-list");
     if (!container) return;
     
-    if (groups.length === 0) {
+    let filteredGroups = [...groups];
+    if (groupSearchKeyword) {
+        filteredGroups = filteredGroups.filter(group => 
+            group.groupName.toLowerCase().includes(groupSearchKeyword) ||
+            group.sport.toLowerCase().includes(groupSearchKeyword)
+        );
+    }
+
+    if (filteredGroups.length === 0) {
         container.innerHTML = "<p style='text-align:center;color:#999;padding:50px;'>暂无群聊，快来创建一个吧</p>";
         return;
     }
@@ -138,4 +146,13 @@ function openGroupChat(groupId) {
     // 跳转到群聊聊天页面
     localStorage.setItem("currentGroupId", groupId);
     window.location.href = "group-chat.html";
+}
+
+// 搜索关键词
+let groupSearchKeyword = "";
+
+// 搜索群聊
+function searchGroups() {
+    groupSearchKeyword = document.getElementById("group-search").value.trim().toLowerCase();
+    renderGroupList();
 }

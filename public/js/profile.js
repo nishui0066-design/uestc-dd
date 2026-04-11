@@ -5,6 +5,11 @@ let invites = [];
 let matches = [];
 let history = [];
 
+// 表情列表
+const emojis = ["😀", "😎", "🥳", "🏃", "⚽", "🏀", "🎮", "🎵", "🐱", "🐶", "🦊", "🐼"];
+// 背景色列表
+const colors = ["#5b78f5", "#e74c3c", "#2ecc71", "#f39c12", "#1abc9c", "#9b59b6", "#e67e22", "#3498db"];
+
 // 页面加载
 window.onload = () => {
     const saved = localStorage.getItem("user");
@@ -13,6 +18,9 @@ window.onload = () => {
         if (!me.scores) me.scores = {};
         if (!me.currentSport) me.currentSport = null;
         if (!me.currentStatus) me.currentStatus = "在线";
+        if (!me.avatar) me.avatar = "😀";
+        if (!me.avatarColor) me.avatarColor = "#5b78f5";
+        if (!me.signature) me.signature = "";
         renderMe();
         loadMyData();
         sendMeToServer();
@@ -71,6 +79,10 @@ function renderMe() {
     const sportText = me.currentSport ? me.currentSport : "未选择";
     const statusText = me.currentStatus ? me.currentStatus : "在线";
     document.getElementById("info-status").innerHTML = `${sportText} · ${statusText}`;
+    
+    // 更新头像和签名
+    updateAvatarDisplay();
+    updateSignatureDisplay();
 }
 
 function getRank(score) {
@@ -85,8 +97,10 @@ function getRank(score) {
 async function renderMyInvites() {
     if (!me) return;
     const my = invites.filter(i => i.to === me.id);
-    document.getElementById("req-count").innerText = my.length;
+    const reqCount = document.getElementById("req-count");
+    if (reqCount) reqCount.innerText = my.length;
     const box = document.getElementById("incoming-requests");
+    if (!box) return;
     box.innerHTML = "";
     
     const response = await fetch("/data");
@@ -145,6 +159,7 @@ function renderMyMatches() {
     if (!me) return;
     const my = matches.filter(m => m.p1 === me.id || m.p2 === me.id);
     const box = document.getElementById("matched-list");
+    if (!box) return;
     box.innerHTML = "";
     
     if (my.length === 0) {
@@ -178,7 +193,6 @@ function renderMyMatches() {
 }
 
 function goToChat(pid, name) {
-    // 跳转到聊天页面并打开对应聊天
     localStorage.setItem("openChatWith", JSON.stringify({ id: pid, name: name }));
     window.location.href = "chat.html";
 }
@@ -226,7 +240,6 @@ function closeUserDetailModal() {
 }
 
 function openActivity(pid, name) {
-    // 存储当前活动对手
     localStorage.setItem("activityPartner", JSON.stringify({ id: pid, name: name }));
     window.location.href = "activity.html";
 }
@@ -248,6 +261,7 @@ function removeMatch(partnerId) {
 function openEditProfile() {
     document.getElementById("edit-name").value = me.name;
     document.getElementById("edit-gender").value = me.gender;
+    document.getElementById("edit-signature").value = me.signature || "";
     document.getElementById("edit-profile-modal").style.display = "flex";
 }
 
@@ -263,6 +277,7 @@ function saveEditProfile() {
     }
     me.name = newName;
     me.gender = document.getElementById("edit-gender").value;
+    me.signature = document.getElementById("edit-signature").value.trim();
     localStorage.setItem("user", JSON.stringify(me));
     renderMe();
     sendMeToServer();
@@ -321,4 +336,141 @@ function showHistory() {
 
 function closeHistoryModal() {
     document.getElementById("history-modal").style.display = "none";
+}
+
+// ========== 头像和签名功能 ==========
+
+// 更新头像显示
+function updateAvatarDisplay() {
+    const avatarDiv = document.getElementById("avatar");
+    if (avatarDiv && me) {
+        avatarDiv.innerText = me.avatar || "😀";
+        avatarDiv.style.background = me.avatarColor || "#5b78f5";
+    }
+}
+
+// 更新签名显示
+function updateSignatureDisplay() {
+    const sigDiv = document.getElementById("signature");
+    if (sigDiv && me) {
+        if (me.signature) {
+            sigDiv.innerHTML = `✏️ ${escapeHtml(me.signature)}`;
+        } else {
+            sigDiv.innerHTML = `✏️ 点击编辑签名`;
+        }
+    }
+}
+
+// 打开头像选择弹窗
+function openAvatarModal() {
+    let modal = document.getElementById("avatarModal");
+    if (modal) {
+        modal.remove();
+    }
+    
+    const emojiHtml = emojis.map(e => `<span class="emoji-option" onclick="selectAvatar('${e}')">${e}</span>`).join('');
+    const colorHtml = colors.map(c => `<span class="color-option" style="background:${c};" onclick="selectAvatarColor('${c}')"></span>`).join('');
+    
+    const modalHtml = `
+        <div id="avatarModal" class="modal" style="display:flex;">
+            <div class="modal-content">
+                <h3>选择头像</h3>
+                <div class="emoji-grid" style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:20px 0;">${emojiHtml}</div>
+                <h3>选择背景色</h3>
+                <div class="color-grid" style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:20px 0;">${colorHtml}</div>
+                <button onclick="closeAvatarModal()" style="margin-top:15px;padding:8px 20px;border:none;border-radius:40px;background:#e2e8f0;cursor:pointer;">关闭</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML("beforeend", modalHtml);
+}
+
+// 关闭头像弹窗
+function closeAvatarModal() {
+    const modal = document.getElementById("avatarModal");
+    if (modal) modal.remove();
+}
+
+// 选择头像表情
+async function selectAvatar(emoji) {
+    if (!me) return;
+    me.avatar = emoji;
+    await sendMeToServer();
+    updateAvatarDisplay();
+    closeAvatarModal();
+    showToastMessage("头像已更新", 1000);
+}
+
+// 选择头像背景色
+async function selectAvatarColor(color) {
+    if (!me) return;
+    me.avatarColor = color;
+    await sendMeToServer();
+    updateAvatarDisplay();
+    closeAvatarModal();
+    showToastMessage("背景色已更新", 1000);
+}
+
+// 打开签名编辑弹窗
+function openSignatureModal() {
+    let modal = document.getElementById("signatureModal");
+    if (modal) {
+        modal.remove();
+    }
+    
+    const modalHtml = `
+        <div id="signatureModal" class="modal" style="display:flex;">
+            <div class="modal-content signature-input-modal" style="width:90%;max-width:350px;background:white;border-radius:28px;padding:24px;text-align:center;">
+                <h3>编辑个性签名</h3>
+                <input type="text" id="signatureInput" placeholder="写点什么吧..." value="${escapeHtml(me.signature || '')}" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:40px;margin:15px 0;font-size:14px;">
+                <div style="display:flex;gap:10px;">
+                    <button onclick="saveSignature()" style="flex:1;padding:10px;background:#5b78f5;color:white;border:none;border-radius:40px;cursor:pointer;">保存</button>
+                    <button onclick="closeSignatureModal()" style="flex:1;padding:10px;background:#e2e8f0;border:none;border-radius:40px;cursor:pointer;">取消</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML("beforeend", modalHtml);
+}
+
+// 关闭签名弹窗
+function closeSignatureModal() {
+    const modal = document.getElementById("signatureModal");
+    if (modal) modal.remove();
+}
+
+// 保存签名
+async function saveSignature() {
+    const input = document.getElementById("signatureInput");
+    if (!input || !me) return;
+    me.signature = input.value.trim();
+    await sendMeToServer();
+    updateSignatureDisplay();
+    closeSignatureModal();
+    showToastMessage("签名已更新", 1000);
+}
+
+// 辅助函数：转义HTML
+function escapeHtml(str) {
+    if (!str) return "";
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+// 显示提示消息
+function showToastMessage(msg, duration = 2000) {
+    let toast = document.getElementById("toastMsg");
+    if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "toastMsg";
+        toast.style.cssText = "position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:10px 24px;border-radius:40px;font-size:0.9rem;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;";
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = "1";
+    setTimeout(() => toast.style.opacity = "0", duration);
 }

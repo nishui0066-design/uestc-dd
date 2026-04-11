@@ -34,6 +34,22 @@
       "currentSport": "足球",
       "currentStatus": "在线",
       "t": 1775739791358
+    },
+    {
+      "id": "u1775132556152",
+      "name": "逆水",
+      "gender": "女",
+      "scores": {
+        "足球": 400,
+        "篮球": 130
+      },
+      "currentSport": "足球",
+      "currentStatus": "在线",
+      "t": 1775896849935,
+      "interests": [],
+      "avatar": "⚽",
+      "avatarColor": "#5b78f5",
+      "signature": ""
     }
   ],
   "userProfiles": [
@@ -47,7 +63,11 @@
       },
       "currentSport": "足球",
       "currentStatus": "在线",
-      "t": 1775739745598
+      "t": 1775896849935,
+      "interests": [],
+      "avatar": "⚽",
+      "avatarColor": "#5b78f5",
+      "signature": ""
     },
     {
       "id": "u1775131897868",
@@ -186,16 +206,14 @@
   ],
   "parties": [
     {
-      "id": 1775571512602,
+      "id": 1775884298901,
       "creator": "u1775132556152",
       "creatorName": "逆水",
       "sport": "足球",
-      "time": "2026-04-07T22:18",
+      "time": "2026-04-11T16:09",
       "location": "操场",
       "players": [
-        "u1775132556152",
-        "u1775131897868",
-        "u1774792920299"
+        "u1775132556152"
       ],
       "status": "招募中",
       "invites": []

@@ -84,9 +84,15 @@
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 2.5rem;
+            font-size: 3rem;
             font-weight: 500;
             box-shadow: 0 12px 24px rgba(91, 120, 245, 0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .avatar:hover {
+            transform: scale(1.05);
         }
 
         .info-basic {
@@ -96,8 +102,23 @@
         .info-basic h1 {
             font-size: 1.8rem;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             color: #0f172a;
+        }
+        
+        .signature {
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 20px;
+            background: #f1f5f9;
+        }
+        
+        .signature:hover {
+            background: #e2e8f0;
         }
 
         .gender-badge {
@@ -311,15 +332,99 @@
             pointer-events: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
+        
+        /* 弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 28px;
+            padding: 24px;
+            width: 90%;
+            max-width: 350px;
+            text-align: center;
+        }
+        
+        .emoji-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .emoji-option {
+            font-size: 40px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        
+        .emoji-option:hover {
+            transform: scale(1.2);
+            background: #f0f0f0;
+        }
+        
+        .color-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .edit-signature-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            margin-top: 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .signature-input-modal input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 40px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
 <div class="container" id="app">
     <div class="card">
         <div class="profile-header">
-            <div class="avatar" id="avatar">👤</div>
+            <div class="avatar" id="avatar" onclick="openAvatarModal()">😀</div>
             <div class="info-basic">
                 <h1 id="userName">加载中...</h1>
+                <div class="signature" id="signature" onclick="openSignatureModal()">✏️ 点击编辑签名</div>
                 <div><span class="gender-badge" id="userGender">--</span></div>
                 <div class="current-sport" id="currentSport">⚡ 当前运动: --</div>
             </div>
@@ -336,7 +441,6 @@
         </div>
     </div>
 
-    <!-- 多选兴趣卡片（已与广场兴趣列表同步） -->
     <div class="card">
         <div class="card-header">
             <h2>✨ 我的兴趣</h2>
@@ -370,6 +474,29 @@
     </div>
 </div>
 
+<!-- 头像选择弹窗 -->
+<div id="avatarModal" class="modal">
+    <div class="modal-content">
+        <h3>选择头像</h3>
+        <div class="emoji-grid" id="emojiGrid"></div>
+        <h3>选择背景色</h3>
+        <div class="color-grid" id="colorGrid"></div>
+        <button onclick="closeAvatarModal()" style="margin-top:15px;padding:8px 20px;border:none;border-radius:40px;background:#e2e8f0;cursor:pointer;">关闭</button>
+    </div>
+</div>
+
+<!-- 签名编辑弹窗 -->
+<div id="signatureModal" class="modal">
+    <div class="modal-content signature-input-modal">
+        <h3>编辑个性签名</h3>
+        <input type="text" id="signatureInput" placeholder="写点什么吧...">
+        <div style="display:flex;gap:10px;">
+            <button onclick="saveSignature()" style="flex:1;padding:10px;background:#5b78f5;color:white;border:none;border-radius:40px;cursor:pointer;">保存</button>
+            <button onclick="closeSignatureModal()" style="flex:1;padding:10px;background:#e2e8f0;border:none;border-radius:40px;cursor:pointer;">取消</button>
+        </div>
+    </div>
+</div>
+
 <div class="bottom-nav">
     <a href="/square.html" class="nav-item">🏠<span>广场</span></a>
     <a href="/party.html" class="nav-item">👥<span>约局</span></a>
@@ -381,11 +508,15 @@
 
 <script>
     let currentUser = null;
-    // ！！！关键修改：与广场页面下拉框的兴趣选项保持完全一致（不含“所有运动”）
     const allSportOptions = [
         "足球", "篮球", "羽毛球", "游泳", "跑步", "乒乓球",
         "王者荣耀", "瓦罗兰特", "LOL", "钢琴", "吉他", "古筝"
     ];
+    
+    // 表情列表
+    const emojis = ["😀", "😎", "🥳", "🏃", "⚽", "🏀", "🎮", "🎵", "🐱", "🐶", "🦊", "🐼"];
+    // 背景色列表
+    const colors = ["#5b78f5", "#e74c3c", "#2ecc71", "#f39c12", "#1abc9c", "#9b59b6", "#e67e22", "#3498db"];
 
     function showToast(msg, duration = 2000) {
         const toast = document.getElementById('toastMsg');
@@ -418,20 +549,38 @@
     function getUserFromData(data, userId) {
         let profile = data.userProfiles.find(u => u.id === userId);
         if (!profile) profile = data.onlineUsers.find(u => u.id === userId);
-        if (!profile) return { id: userId, name: "新用户", gender: "保密", scores: {}, currentSport: "未选择", interests: [] };
+        if (!profile) return { id: userId, name: "新用户", gender: "保密", scores: {}, currentSport: "未选择", interests: [], avatar: "😀", avatarColor: "#5b78f5", signature: "" };
         if (!profile.interests) profile.interests = [];
         if (!profile.scores) profile.scores = {};
+        if (!profile.avatar) profile.avatar = "😀";
+        if (!profile.avatarColor) profile.avatarColor = "#5b78f5";
+        if (!profile.signature) profile.signature = "";
         return profile;
+    }
+
+    function updateAvatarDisplay() {
+        const avatarDiv = document.getElementById('avatar');
+        if (currentUser) {
+            avatarDiv.innerText = currentUser.avatar || "😀";
+            avatarDiv.style.background = currentUser.avatarColor || "#5b78f5";
+        }
+    }
+    
+    function updateSignatureDisplay() {
+        const sigDiv = document.getElementById('signature');
+        if (currentUser && currentUser.signature) {
+            sigDiv.innerHTML = `✏️ ${currentUser.signature}`;
+        } else {
+            sigDiv.innerHTML = `✏️ 点击编辑签名`;
+        }
     }
 
     function renderBasicInfo(user) {
         document.getElementById('userName').innerText = user.name || '无名氏';
         document.getElementById('userGender').innerText = user.gender === '男' ? '♂ 男生' : (user.gender === '女' ? '♀ 女生' : '未设置');
         document.getElementById('currentSport').innerText = user.currentSport ? `⚡ 当前运动: ${user.currentSport}` : '⚡ 当前运动: 未选择';
-        const avatarDiv = document.getElementById('avatar');
-        if (user.gender === '男') avatarDiv.innerText = '👨';
-        else if (user.gender === '女') avatarDiv.innerText = '👩';
-        else avatarDiv.innerText = '👤';
+        updateAvatarDisplay();
+        updateSignatureDisplay();
     }
 
     function renderScores(scores) {
@@ -470,37 +619,102 @@
         return Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
     }
 
-    async function saveUserInterests(selectedInterests) {
-        if (!currentUser) {
-            showToast('用户信息未加载，请稍后重试', 2000);
-            return false;
-        }
+    async function saveUserData() {
+        if (!currentUser) return false;
         try {
             const updatedUser = {
                 ...currentUser,
-                interests: selectedInterests,
                 t: Date.now(),
                 currentStatus: '在线'
             };
-            if (!updatedUser.scores) updatedUser.scores = {};
             const response = await fetch('/online', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updatedUser)
             });
-            if (response.ok) {
-                currentUser.interests = selectedInterests;
-                showToast('兴趣已保存 ✅', 1500);
-                return true;
-            } else {
-                showToast('保存失败，请重试', 2000);
-                return false;
-            }
+            return response.ok;
         } catch (err) {
-            console.error('保存兴趣出错:', err);
-            showToast('网络错误，保存失败', 2000);
+            console.error('保存失败:', err);
             return false;
         }
+    }
+
+    async function saveUserInterests(selectedInterests) {
+        if (!currentUser) return false;
+        currentUser.interests = selectedInterests;
+        const success = await saveUserData();
+        if (success) showToast('兴趣已保存 ✅', 1500);
+        else showToast('保存失败，请重试', 2000);
+        return success;
+    }
+
+    // 头像相关函数
+    function openAvatarModal() {
+        const modal = document.getElementById('avatarModal');
+        const emojiGrid = document.getElementById('emojiGrid');
+        const colorGrid = document.getElementById('colorGrid');
+        
+        emojiGrid.innerHTML = '';
+        colorGrid.innerHTML = '';
+        
+        emojis.forEach(emoji => {
+            const div = document.createElement('div');
+            div.className = 'emoji-option';
+            div.innerText = emoji;
+            div.onclick = () => selectAvatar(emoji);
+            emojiGrid.appendChild(div);
+        });
+        
+        colors.forEach(color => {
+            const div = document.createElement('div');
+            div.className = 'color-option';
+            div.style.background = color;
+            div.onclick = () => selectAvatarColor(color);
+            colorGrid.appendChild(div);
+        });
+        
+        modal.style.display = 'flex';
+    }
+    
+    function closeAvatarModal() {
+        document.getElementById('avatarModal').style.display = 'none';
+    }
+    
+    async function selectAvatar(emoji) {
+        currentUser.avatar = emoji;
+        await saveUserData();
+        updateAvatarDisplay();
+        closeAvatarModal();
+        showToast('头像已更新', 1000);
+    }
+    
+    async function selectAvatarColor(color) {
+        currentUser.avatarColor = color;
+        await saveUserData();
+        updateAvatarDisplay();
+        closeAvatarModal();
+        showToast('背景色已更新', 1000);
+    }
+    
+    // 签名相关函数
+    function openSignatureModal() {
+        const modal = document.getElementById('signatureModal');
+        const input = document.getElementById('signatureInput');
+        input.value = currentUser.signature || '';
+        modal.style.display = 'flex';
+    }
+    
+    function closeSignatureModal() {
+        document.getElementById('signatureModal').style.display = 'none';
+    }
+    
+    async function saveSignature() {
+        const input = document.getElementById('signatureInput');
+        currentUser.signature = input.value.trim();
+        await saveUserData();
+        updateSignatureDisplay();
+        closeSignatureModal();
+        showToast('签名已更新', 1000);
     }
 
     function renderMatches(data, userId) {
@@ -579,7 +793,7 @@
                 }
                 const selected = getSelectedInterests();
                 await saveUserInterests(selected);
-                await refreshAll(); // 刷新以同步最新数据
+                await refreshAll();
                 showToast('兴趣同步成功！', 1200);
             });
         }
@@ -594,16 +808,15 @@
         syncLocalUserId();
         await refreshAll();
         bindSaveEvent();
-        console.log('我的信息页面已加载，兴趣选项与广场完全一致 ✅');
+        console.log('我的信息页面已加载，头像签名功能已添加 ✅');
     })();
 </script>
 <script>
-    // 注册 Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
             .then(reg => console.log('SW 注册成功', reg))
             .catch(err => console.log('SW 注册失败', err));
-        }
-    </script>
+    }
+</script>
 </body>
 </html>

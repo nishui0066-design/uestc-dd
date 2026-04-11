@@ -27,7 +27,7 @@
             padding: 20px;
             background: rgba(255,255,255,0.8);
             border-radius: 16px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 16px rgba(147, 17, 17, 0.08);
         }
         header h1 { 
             font-size: 1.8rem;
@@ -279,6 +279,7 @@
                     <option value="招募中">招募中</option>
                     <option value="已结束">已结束</option>
                 </select>
+                <input type="text" id="party-search" placeholder="🔍 搜索约局（地点/运动）" style="padding: 8px; border-radius: 25px; border: 1px solid #ddd; flex: 1; min-width: 150px;" onkeyup="searchParties()">
                 <button onclick="filterParties()">🔍 筛选</button>
                 <button onclick="resetPartyFilter()">🔄 重置</button>
             </div>
