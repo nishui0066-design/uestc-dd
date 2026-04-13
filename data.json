@@ -1,30 +1,6 @@
 {
   "onlineUsers": [
     {
-      "id": "u1774792920299",
-      "name": "第三",
-      "gender": "男",
-      "main": "",
-      "sub": "小类",
-      "score": 50,
-      "scores": {},
-      "currentSport": "足球",
-      "currentStatus": "在线",
-      "interests": [
-        "足球",
-        "跑步",
-        "游泳"
-      ],
-      "matchProfile": {
-        "age": 99,
-        "height": 188,
-        "gender": "男",
-        "personality": "无",
-        "description": "冷静"
-      },
-      "t": 1775625431431
-    },
-    {
       "id": "u1775131897868",
       "name": "nishui666",
       "gender": "男",
@@ -102,7 +78,7 @@
         "personality": "无",
         "description": "冷静"
       },
-      "t": 1775625431431
+      "t": 1776081524575
     },
     {
       "id": "u1775608479650",
