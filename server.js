@@ -41,10 +41,7 @@ function saveData() {
     console.log("💾 数据已保存");
 }
 
-// ========== 静态文件（放在API路由之后） ==========
-app.use(express.static(__dirname + "/public"));
-
-// ========== API 路由（全部放在静态文件之前） ==========
+// ========== 静态文件（必须放在API路由之前） ==========
 
 // 获取单个约局详情（必须放在 static 之前）
 app.get("/api/party/:id", (req, res) => {
@@ -60,6 +57,10 @@ app.get("/api/party/:id", (req, res) => {
         res.status(404).json({ error: "约局不存在" });
     }
 });
+
+app.use(express.static(__dirname + "/public"));
+
+// ========== API 路由 ==========
 
 app.get("/data", (req, res) => res.json(data));
 app.get("/groups", (req, res) => res.json(data.groups || []));
@@ -368,6 +369,7 @@ app.post("/chat/conversations", (req, res) => {
 // ========== 页面路由 ==========
 app.get("/", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
 app.get("/square.html", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
+app.get("/match.html", (req, res) => res.sendFile("pages/match.html", { root: __dirname + "/public" }));
 app.get("/party.html", (req, res) => res.sendFile("pages/party.html", { root: __dirname + "/public" }));
 app.get("/profile.html", (req, res) => res.sendFile("pages/profile.html", { root: __dirname + "/public" }));
 app.get("/chat.html", (req, res) => res.sendFile("pages/chat.html", { root: __dirname + "/public" }));
