@@ -427,7 +427,20 @@
                 <div class="signature" id="signature" onclick="openSignatureModal()">✏️ 点击编辑签名</div>
                 <div><span class="gender-badge" id="userGender">--</span></div>
                 <div class="current-sport" id="currentSport">⚡ 当前运动: --</div>
+                <div class="current-status" id="currentStatus" style="font-size: 0.9rem; background: #f1f5f9; display: inline-block; padding: 6px 16px; border-radius: 40px; color: #334155; margin-top: 8px;">🟢 状态: 在线</div>
             </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>📶 状态设置</h2>
+            <span>选择你的当前状态</span>
+        </div>
+        <div class="interests-section">
+            <div class="interests-label">🎯 选择状态（状态会在广场中显示）</div>
+            <div class="checkbox-group" id="statusCheckboxGroup"></div>
+            <button class="btn-save" id="saveStatusBtn">💾 保存状态</button>
         </div>
     </div>
 
@@ -512,6 +525,12 @@
         "足球", "篮球", "羽毛球", "游泳", "跑步", "乒乓球",
         "王者荣耀", "瓦罗兰特", "LOL", "钢琴", "吉他", "古筝"
     ];
+    const statusOptions = [
+        { value: "在线", label: "🟢 在线", color: "#10b981" },
+        { value: "等待匹配", label: "🔄 等待匹配", color: "#3b82f6" },
+        { value: "游戏中", label: "🎮 游戏中", color: "#8b5cf6" },
+        { value: "休息中", label: "😴 休息中", color: "#94a3b8" }
+    ];
     
     // 表情列表
     const emojis = ["😀", "😎", "🥳", "🏃", "⚽", "🏀", "🎮", "🎵", "🐱", "🐶", "🦊", "🐼"];
@@ -549,12 +568,13 @@
     function getUserFromData(data, userId) {
         let profile = data.userProfiles.find(u => u.id === userId);
         if (!profile) profile = data.onlineUsers.find(u => u.id === userId);
-        if (!profile) return { id: userId, name: "新用户", gender: "保密", scores: {}, currentSport: "未选择", interests: [], avatar: "😀", avatarColor: "#5b78f5", signature: "" };
+        if (!profile) return { id: userId, name: "新用户", gender: "保密", scores: {}, currentSport: "未选择", interests: [], avatar: "😀", avatarColor: "#5b78f5", signature: "", currentStatus: "在线" };
         if (!profile.interests) profile.interests = [];
         if (!profile.scores) profile.scores = {};
         if (!profile.avatar) profile.avatar = "😀";
         if (!profile.avatarColor) profile.avatarColor = "#5b78f5";
         if (!profile.signature) profile.signature = "";
+        if (!profile.currentStatus) profile.currentStatus = "在线";
         return profile;
     }
 
@@ -579,6 +599,12 @@
         document.getElementById('userName').innerText = user.name || '无名氏';
         document.getElementById('userGender').innerText = user.gender === '男' ? '♂ 男生' : (user.gender === '女' ? '♀ 女生' : '未设置');
         document.getElementById('currentSport').innerText = user.currentSport ? `⚡ 当前运动: ${user.currentSport}` : '⚡ 当前运动: 未选择';
+        
+        const statusDiv = document.getElementById('currentStatus');
+        const currentStatus = user.currentStatus || '在线';
+        const statusOption = statusOptions.find(option => option.value === currentStatus);
+        statusDiv.innerHTML = `${statusOption ? statusOption.label : '🟢 在线'}: ${currentStatus}`;
+        
         updateAvatarDisplay();
         updateSignatureDisplay();
     }
@@ -614,9 +640,38 @@
         });
     }
 
+    function renderStatusCheckbox(currentStatus) {
+        const group = document.getElementById('statusCheckboxGroup');
+        group.innerHTML = '';
+        statusOptions.forEach(option => {
+            const isChecked = option.value === currentStatus;
+            const label = document.createElement('label');
+            label.style.position = 'relative';
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'status';
+            radio.value = option.value;
+            radio.checked = isChecked;
+            label.appendChild(radio);
+            label.appendChild(document.createTextNode(option.label));
+            if (isChecked) {
+                label.style.background = option.color;
+                label.style.color = 'white';
+                label.style.borderColor = option.color;
+            }
+            group.appendChild(label);
+        });
+    }
+
     function getSelectedInterests() {
         const checkboxes = document.querySelectorAll('#interestsCheckboxGroup input[type="checkbox"]');
         return Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+    }
+
+    function getSelectedStatus() {
+        const radios = document.querySelectorAll('#statusCheckboxGroup input[type="radio"]');
+        const selected = Array.from(radios).find(radio => radio.checked);
+        return selected ? selected.value : '在线';
     }
 
     async function saveUserData() {
@@ -624,8 +679,7 @@
         try {
             const updatedUser = {
                 ...currentUser,
-                t: Date.now(),
-                currentStatus: '在线'
+                t: Date.now()
             };
             const response = await fetch('/online', {
                 method: 'POST',
@@ -644,6 +698,15 @@
         currentUser.interests = selectedInterests;
         const success = await saveUserData();
         if (success) showToast('兴趣已保存 ✅', 1500);
+        else showToast('保存失败，请重试', 2000);
+        return success;
+    }
+
+    async function saveUserStatus(selectedStatus) {
+        if (!currentUser) return false;
+        currentUser.currentStatus = selectedStatus;
+        const success = await saveUserData();
+        if (success) showToast('状态已保存 ✅', 1500);
         else showToast('保存失败，请重试', 2000);
         return success;
     }
@@ -775,6 +838,7 @@
             renderBasicInfo(user);
             renderScores(user.scores || {});
             renderInterestsCheckbox(user.interests || []);
+            renderStatusCheckbox(user.currentStatus || '在线');
             renderMatches(fullData, userId);
             renderHistory(fullData, userId);
         } catch (error) {
@@ -795,6 +859,20 @@
                 await saveUserInterests(selected);
                 await refreshAll();
                 showToast('兴趣同步成功！', 1200);
+            });
+        }
+
+        const saveStatusBtn = document.getElementById('saveStatusBtn');
+        if (saveStatusBtn) {
+            saveStatusBtn.addEventListener('click', async () => {
+                if (!currentUser) {
+                    showToast('用户信息尚未就绪，稍后再试', 1500);
+                    return;
+                }
+                const selectedStatus = getSelectedStatus();
+                await saveUserStatus(selectedStatus);
+                await refreshAll();
+                showToast('状态同步成功！', 1200);
             });
         }
     }
