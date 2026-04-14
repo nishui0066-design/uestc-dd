@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>管理员系统 - 校搭</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .admin-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        .admin-nav {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+        .admin-nav button {
+            padding: 12px 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .admin-nav button.active {
+            background: #5b78f5;
+            color: white;
+            border-color: #5b78f5;
+        }
+        .admin-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        .admin-section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: #333;
+            border-left: 4px solid #5b78f5;
+            padding-left: 16px;
+        }
+        .user-grid, .party-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .user-card, .party-card {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .user-card h4, .party-card h4 {
+            margin-bottom: 12px;
+            color: #333;
+        }
+        .user-card p, .party-card p {
+            margin-bottom: 8px;
+            color: #666;
+        }
+        .user-actions, .party-actions {
+            margin-top: 16px;
+            display: flex;
+            gap: 8px;
+        }
+        .user-actions button, .party-actions button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-edit {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 90%;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .modal-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <button class="logout-btn" onclick="logoutAdmin()">🚪 退出</button>
+        
+        <div class="admin-header">
+            <h1>🛠️ 管理员系统</h1>
+            <p>管理用户和约局系统</p>
+        </div>
+        
+        <div class="admin-nav">
+            <button class="active" onclick="showSection('users')">👥 用户管理</button>
+            <button onclick="showSection('parties')">🏟️ 约局管理</button>
+        </div>
+        
+        <div id="users-section" class="admin-section">
+            <h2>👥 用户管理</h2>
+            <div id="user-grid" class="user-grid"></div>
+        </div>
+        
+        <div id="parties-section" class="admin-section" style="display: none;">
+            <h2>🏟️ 约局管理</h2>
+            <div id="party-grid" class="party-grid"></div>
+        </div>
+    </div>
+    
+    <!-- 用户编辑弹窗 -->
+    <div id="user-edit-modal" class="modal">
+        <div class="modal-content">
+            <h3>编辑用户信息</h3>
+            <div class="form-group">
+                <label for="edit-name">昵称</label>
+                <input type="text" id="edit-name" placeholder="输入昵称">
+            </div>
+            <div class="form-group">
+                <label for="edit-gender">性别</label>
+                <select id="edit-gender">
+                    <option value="男">男</option>
+                    <option value="女">女</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="edit-sport">当前运动</label>
+                <input type="text" id="edit-sport" placeholder="输入当前运动">
+            </div>
+            <div class="form-group">
+                <label for="edit-status">当前状态</label>
+                <select id="edit-status">
+                    <option value="在线">在线</option>
+                    <option value="等待匹配">等待匹配</option>
+                    <option value="游戏中">游戏中</option>
+                    <option value="休息中">休息中</option>
+                </select>
+            </div>
+            <input type="hidden" id="edit-user-id">
+            <div class="modal-btns">
+                <button onclick="saveUserChanges()" class="btn-main">保存</button>
+                <button onclick="closeUserEditModal()" class="btn-lose">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 约局管理弹窗 -->
+    <div id="party-edit-modal" class="modal">
+        <div class="modal-content">
+            <h3>管理约局用户</h3>
+            <div id="party-players-list"></div>
+            <input type="hidden" id="edit-party-id">
+            <div class="modal-btns">
+                <button onclick="closePartyEditModal()" class="btn-lose">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 检查管理员登录状态
+        if (!localStorage.getItem('adminLoggedIn')) {
+            window.location.href = 'admin-login.html';
+        }
+        
+        function logoutAdmin() {
+            localStorage.removeItem('adminLoggedIn');
+            window.location.href = 'admin-login.html';
+        }
+        
+        function showSection(section) {
+            // 隐藏所有部分
+            document.getElementById('users-section').style.display = 'none';
+            document.getElementById('parties-section').style.display = 'none';
+            
+            // 显示选中部分
+            document.getElementById(section + '-section').style.display = 'block';
+            
+            // 更新导航按钮状态
+            document.querySelectorAll('.admin-nav button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 加载对应数据
+            if (section === 'users') {
+                loadUsers();
+            } else if (section === 'parties') {
+                loadParties();
+            }
+        }
+        
+        function loadUsers() {
+            fetch('/data')
+                .then(r => r.json())
+                .then(data => {
+                    const users = data.userProfiles || [];
+                    const userGrid = document.getElementById('user-grid');
+                    userGrid.innerHTML = '';
+                    
+                    users.forEach(user => {
+                        const card = document.createElement('div');
+                        card.className = 'user-card';
+                        card.innerHTML = `
+                            <h4>${user.name} (${user.gender})</h4>
+                            <p>ID: ${user.id}</p>
+                            <p>当前运动: ${user.currentSport || '未设置'}</p>
+                            <p>当前状态: ${user.currentStatus || '在线'}</p>
+                            <div class="user-actions">
+                                <button class="btn-edit" onclick="editUser('${user.id}')">编辑</button>
+                                <button class="btn-delete" onclick="deleteUser('${user.id}')">删除</button>
+                            </div>
+                        `;
+                        userGrid.appendChild(card);
+                    });
+                });
+        }
+        
+        function loadParties() {
+            fetch('/data')
+                .then(r => r.json())
+                .then(data => {
+                    const parties = data.parties || [];
+                    const partyGrid = document.getElementById('party-grid');
+                    partyGrid.innerHTML = '';
+                    
+                    parties.forEach(party => {
+                        const card = document.createElement('div');
+                        card.className = 'party-card';
+                        card.innerHTML = `
+                            <h4>${party.sport} - ${party.creatorName}</h4>
+                            <p>时间: ${party.time}</p>
+                            <p>地点: ${party.location}</p>
+                            <p>人数: ${party.players ? party.players.length : 0}/10</p>
+                            <div class="party-actions">
+                                <button class="btn-edit" onclick="managePartyUsers('${party.id}')">管理用户</button>
+                            </div>
+                        `;
+                        partyGrid.appendChild(card);
+                    });
+                });
+        }
+        
+        function editUser(userId) {
+            fetch('/data')
+                .then(r => r.json())
+                .then(data => {
+                    const user = data.userProfiles.find(u => u.id === userId);
+                    if (user) {
+                        document.getElementById('edit-user-id').value = user.id;
+                        document.getElementById('edit-name').value = user.name;
+                        document.getElementById('edit-gender').value = user.gender;
+                        document.getElementById('edit-sport').value = user.currentSport || '';
+                        document.getElementById('edit-status').value = user.currentStatus || '在线';
+                        document.getElementById('user-edit-modal').style.display = 'flex';
+                    }
+                });
+        }
+        
+        function saveUserChanges() {
+            const userId = document.getElementById('edit-user-id').value;
+            const name = document.getElementById('edit-name').value;
+            const gender = document.getElementById('edit-gender').value;
+            const sport = document.getElementById('edit-sport').value;
+            const status = document.getElementById('edit-status').value;
+            
+            fetch('/data')
+                .then(r => r.json())
+                .then(data => {
+                    const user = data.userProfiles.find(u => u.id === userId);
+                    if (user) {
+                        user.name = name;
+                        user.gender = gender;
+                        user.currentSport = sport;
+                        user.currentStatus = status;
+                        
+                        // 更新在线用户
+                        const onlineUser = data.onlineUsers.find(u => u.id === userId);
+                        if (onlineUser) {
+                            onlineUser.name = name;
+                            onlineUser.gender = gender;
+                            onlineUser.currentSport = sport;
+                            onlineUser.currentStatus = status;
+                        }
+                        
+                        // 发送更新
+                        fetch('/online', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(user)
+                        }).then(() => {
+                            closeUserEditModal();
+                            loadUsers();
+                            alert('用户信息已更新');
+                        });
+                    }
+                });
+        }
+        
+        function deleteUser(userId) {
+            if (confirm('确定要删除这个用户吗？')) {
+                fetch('/data')
+                    .then(r => r.json())
+                    .then(data => {
+                        // 从用户档案中删除
+                        data.userProfiles = data.userProfiles.filter(u => u.id !== userId);
+                        // 从在线用户中删除
+                        data.onlineUsers = data.onlineUsers.filter(u => u.id !== userId);
+                        // 从约局中删除
+                        data.parties.forEach(party => {
+                            if (party.players) {
+                                party.players = party.players.filter(id => id !== userId);
+                            }
+                        });
+                        // 从匹配中删除
+                        data.matches = data.matches.filter(match => {
+                            return match.p1 !== userId && match.p2 !== userId;
+                        });
+                        
+                        // 保存数据
+                        fetch('/online', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: userId, delete: true })
+                        }).then(() => {
+                            loadUsers();
+                            alert('用户已删除');
+                        });
+                    });
+            }
+        }
+        
+        function managePartyUsers(partyId) {
+            fetch('/data')
+                .then(r => r.json())
+                .then(data => {
+                    const party = data.parties.find(p => p.id == partyId);
+                    if (party && party.players) {
+                        document.getElementById('edit-party-id').value = party.id;
+                        const playersList = document.getElementById('party-players-list');
+                        playersList.innerHTML = '';
+                        
+                        party.players.forEach(playerId => {
+                            const user = data.userProfiles.find(u => u.id === playerId);
+                            const playerDiv = document.createElement('div');
+                            playerDiv.style.display = 'flex';
+                            playerDiv.style.justifyContent = 'space-between';
+                            playerDiv.style.alignItems = 'center';
+                            playerDiv.style.padding = '8px';
+                            playerDiv.style.borderBottom = '1px solid #eee';
+                            playerDiv.innerHTML = `
+                                <span>${user ? user.name : '未知用户'}</span>
+                                <button class="btn-delete" onclick="removeUserFromParty('${party.id}', '${playerId}')">移除</button>
+                            `;
+                            playersList.appendChild(playerDiv);
+                        });
+                        
+                        document.getElementById('party-edit-modal').style.display = 'flex';
+                    }
+                });
+        }
+        
+        function removeUserFromParty(partyId, userId) {
+            if (confirm('确定要从约局中移除这个用户吗？')) {
+                fetch('/party/leave', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ partyId: partyId, userId: userId })
+                }).then(() => {
+                    managePartyUsers(partyId);
+                    loadParties();
+                    alert('用户已从约局中移除');
+                });
+            }
+        }
+        
+        function closeUserEditModal() {
+            document.getElementById('user-edit-modal').style.display = 'none';
+        }
+        
+        function closePartyEditModal() {
+            document.getElementById('party-edit-modal').style.display = 'none';
+        }
+        
+        // 初始加载用户数据
+        loadUsers();
+    </script>
+</body>
+</html>

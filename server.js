@@ -58,6 +58,24 @@ app.get("/api/party/:id", (req, res) => {
     }
 });
 
+// ========== 页面路由 ==========
+app.get("/", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
+app.get("/square.html", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
+app.get("/match.html", (req, res) => res.sendFile("pages/match.html", { root: __dirname + "/public" }));
+app.get("/party.html", (req, res) => res.sendFile("pages/party.html", { root: __dirname + "/public" }));
+app.get("/profile.html", (req, res) => res.sendFile("pages/profile.html", { root: __dirname + "/public" }));
+app.get("/chat.html", (req, res) => res.sendFile("pages/chat.html", { root: __dirname + "/public" }));
+app.get("/activity.html", (req, res) => res.sendFile("pages/activity.html", { root: __dirname + "/public" }));
+app.get("/register.html", (req, res) => res.sendFile("pages/register.html", { root: __dirname + "/public" }));
+app.get("/nav.html", (req, res) => res.sendFile("pages/nav.html", { root: __dirname + "/public" }));
+app.get("/groups.html", (req, res) => res.sendFile("pages/groups.html", { root: __dirname + "/public" }));
+app.get("/group-chat.html", (req, res) => res.sendFile("pages/group-chat.html", { root: __dirname + "/public" }));
+app.get("/party-detail.html", (req, res) => res.sendFile("pages/party-detail.html", { root: __dirname + "/public" }));
+app.get("/admin-login.html", (req, res) => res.sendFile("pages/admin-login.html", { root: __dirname + "/public" }));
+app.get("/admin.html", (req, res) => res.sendFile("pages/admin.html", { root: __dirname + "/public" }));
+app.get("/manifest.json", (req, res) => res.sendFile("manifest.json", { root: __dirname + "/public" }));
+app.get("/sw.js", (req, res) => res.sendFile("sw.js", { root: __dirname + "/public" }));
+
 app.use(express.static(__dirname + "/public"));
 
 // ========== API 路由 ==========
@@ -67,6 +85,24 @@ app.get("/groups", (req, res) => res.json(data.groups || []));
 
 app.post("/online", (req, res) => {
     const u = req.body;
+    
+    // 处理删除用户
+    if (u.delete) {
+        data.onlineUsers = data.onlineUsers.filter(user => user.id !== u.id);
+        data.userProfiles = data.userProfiles.filter(user => user.id !== u.id);
+        data.parties.forEach(party => {
+            if (party.players) {
+                party.players = party.players.filter(id => id !== u.id);
+            }
+        });
+        data.matches = data.matches.filter(match => {
+            return match.p1 !== u.id && match.p2 !== u.id;
+        });
+        saveData();
+        res.sendStatus(200);
+        return;
+    }
+    
     u.t = Date.now();
     const idx = data.onlineUsers.findIndex(x => x.id === u.id);
     if (idx >= 0) data.onlineUsers[idx] = u;
@@ -365,22 +401,6 @@ app.post("/chat/conversations", (req, res) => {
     conversations.sort((a, b) => b.lastTime - a.lastTime);
     res.json(conversations);
 });
-
-// ========== 页面路由 ==========
-app.get("/", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
-app.get("/square.html", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
-app.get("/match.html", (req, res) => res.sendFile("pages/match.html", { root: __dirname + "/public" }));
-app.get("/party.html", (req, res) => res.sendFile("pages/party.html", { root: __dirname + "/public" }));
-app.get("/profile.html", (req, res) => res.sendFile("pages/profile.html", { root: __dirname + "/public" }));
-app.get("/chat.html", (req, res) => res.sendFile("pages/chat.html", { root: __dirname + "/public" }));
-app.get("/activity.html", (req, res) => res.sendFile("pages/activity.html", { root: __dirname + "/public" }));
-app.get("/register.html", (req, res) => res.sendFile("pages/register.html", { root: __dirname + "/public" }));
-app.get("/nav.html", (req, res) => res.sendFile("pages/nav.html", { root: __dirname + "/public" }));
-app.get("/groups.html", (req, res) => res.sendFile("pages/groups.html", { root: __dirname + "/public" }));
-app.get("/group-chat.html", (req, res) => res.sendFile("pages/group-chat.html", { root: __dirname + "/public" }));
-app.get("/party-detail.html", (req, res) => res.sendFile("pages/party-detail.html", { root: __dirname + "/public" }));
-app.get("/manifest.json", (req, res) => res.sendFile("manifest.json", { root: __dirname + "/public" }));
-app.get("/sw.js", (req, res) => res.sendFile("sw.js", { root: __dirname + "/public" }));
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`校搭联机服务器启动：http://localhost:${PORT}`));

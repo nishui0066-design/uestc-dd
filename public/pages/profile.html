@@ -485,6 +485,18 @@
             <div class="empty-tip">暂无对战记录，去约战一场吧！</div>
         </div>
     </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>🔒 管理员入口</h2>
+            <span>输入密码进入</span>
+        </div>
+        <div class="interests-section">
+            <div class="interests-label">请输入管理员密码</div>
+            <input type="password" id="adminPassword" placeholder="输入管理员密码" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 40px; margin: 15px 0; font-size: 14px;">
+            <button class="btn-save" onclick="adminLogin()">🚪 进入管理员系统</button>
+        </div>
+    </div>
 </div>
 
 <!-- 头像选择弹窗 -->
@@ -880,6 +892,17 @@
     function syncLocalUserId() {
         const userId = getCurrentUserId();
         if (userId) localStorage.setItem('userId', userId);
+    }
+
+    // 管理员登录函数
+    function adminLogin() {
+        const password = document.getElementById('adminPassword').value;
+        if (password === '666') {
+            localStorage.setItem('adminLoggedIn', 'true');
+            window.location.href = 'admin.html';
+        } else {
+            alert('密码错误，请输入正确的管理员密码');
+        }
     }
 
     (async function init() {

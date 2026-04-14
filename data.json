@@ -26,6 +26,38 @@
       "avatar": "⚽",
       "avatarColor": "#5b78f5",
       "signature": ""
+    },
+    {
+      "id": "u1775611633267",
+      "name": "我是订货",
+      "gender": "男",
+      "scores": {},
+      "currentSport": null,
+      "currentStatus": "等待匹配",
+      "t": 1776135358177,
+      "interests": [],
+      "avatar": "😀",
+      "avatarColor": "#5b78f5",
+      "signature": ""
+    },
+    {
+      "id": "u1775608479650",
+      "name": "到外地",
+      "gender": "男",
+      "scores": {
+        "王者荣耀": 60
+      },
+      "currentSport": "王者荣耀",
+      "currentStatus": "游戏中",
+      "interests": [
+        "篮球",
+        "乒乓球",
+        "游泳"
+      ],
+      "t": 1776136998616,
+      "avatar": "😀",
+      "avatarColor": "#5b78f5",
+      "signature": ""
     }
   ],
   "userProfiles": [
@@ -65,7 +97,7 @@
       "score": 50,
       "scores": {},
       "currentSport": "足球",
-      "currentStatus": "在线",
+      "currentStatus": "等待匹配",
       "interests": [
         "足球",
         "跑步",
@@ -78,7 +110,10 @@
         "personality": "无",
         "description": "冷静"
       },
-      "t": 1776083421825
+      "t": 1776136973392,
+      "avatar": "😀",
+      "avatarColor": "#5b78f5",
+      "signature": ""
     },
     {
       "id": "u1775608479650",
@@ -88,13 +123,16 @@
         "王者荣耀": 60
       },
       "currentSport": "王者荣耀",
-      "currentStatus": "在线",
+      "currentStatus": "游戏中",
       "interests": [
         "篮球",
         "乒乓球",
         "游泳"
       ],
-      "t": 1775625443659
+      "t": 1776136998616,
+      "avatar": "😀",
+      "avatarColor": "#5b78f5",
+      "signature": ""
     },
     {
       "id": "u1775611633267",
@@ -102,8 +140,12 @@
       "gender": "男",
       "scores": {},
       "currentSport": null,
-      "currentStatus": "在线",
-      "t": 1776083252270
+      "currentStatus": "等待匹配",
+      "t": 1776135358177,
+      "interests": [],
+      "avatar": "😀",
+      "avatarColor": "#5b78f5",
+      "signature": ""
     }
   ],
   "invites": [

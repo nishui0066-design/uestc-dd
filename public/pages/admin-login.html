@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>管理员登录 - 校搭</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .admin-login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            text-align: center;
+        }
+        .admin-login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .admin-login-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .admin-login-box button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-login-container">
+        <div class="admin-login-box">
+            <h1>🔒 管理员登录</h1>
+            <p>请输入管理员密码</p>
+            <input type="password" id="admin-password" placeholder="密码" autocomplete="off">
+            <button onclick="loginAdmin()" class="btn-main">登录</button>
+        </div>
+    </div>
+    <script>
+        function loginAdmin() {
+            const password = document.getElementById("admin-password").value;
+            if (password === "666") {
+                localStorage.setItem("adminLoggedIn", "true");
+                window.location.href = "admin.html";
+            } else {
+                alert("密码错误，请输入正确的管理员密码");
+            }
+        }
+    </script>
+</body>
+</html>
