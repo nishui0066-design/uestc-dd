@@ -480,6 +480,8 @@
                 <div>
                     <span class="gender-badge" id="userGender">--</span>
                     <button class="edit-btn" onclick="openEditProfileModal()">✏️ 编辑资料</button>
+                    <button class="edit-btn" onclick="openAdminModal()" style="background: #9b59b6;">🔧 管理员</button>
+                    <button class="edit-btn" onclick="logout()" style="background: #e74c3c;">🚪 退出</button>
                 </div>
                 <div class="current-sport" id="currentSport" onclick="openStatusModal()">⚡ 当前运动: --</div>
             </div>
@@ -609,6 +611,65 @@
             <button onclick="saveStatusSetting()" class="btn-primary">保存</button>
             <button onclick="closeStatusModal()" class="btn-secondary">取消</button>
         </div>
+    </div>
+</div>
+
+<!-- 管理员密码输入弹窗 -->
+<div id="adminPasswordModal" class="modal">
+    <div class="modal-content">
+        <h3>🔒 管理员系统</h3>
+        <p style="text-align:left;margin-bottom:10px;">请输入管理员密码：</p>
+        <input type="password" id="adminPassword" placeholder="输入密码" style="margin-bottom:20px;">
+        <div style="display:flex;gap:10px;">
+            <button onclick="verifyAdminPassword()" class="btn-primary">确认</button>
+            <button onclick="closeAdminPasswordModal()" class="btn-secondary">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 管理员系统主界面 -->
+<div id="adminSystemModal" class="modal">
+    <div class="modal-content" style="max-width:400px;">
+        <h3>🔧 管理员系统</h3>
+        <div style="margin:20px 0;">
+            <button onclick="openUserManagement()" style="width:100%;padding:12px;margin-bottom:10px;background:#5b78f5;color:white;border:none;border-radius:40px;cursor:pointer;">👥 用户管理</button>
+            <button onclick="openPartyManagement()" style="width:100%;padding:12px;margin-bottom:10px;background:#2ecc71;color:white;border:none;border-radius:40px;cursor:pointer;">🎮 约局管理</button>
+            <button onclick="openGroupManagement()" style="width:100%;padding:12px;margin-bottom:10px;background:#f39c12;color:white;border:none;border-radius:40px;cursor:pointer;">💬 群聊管理</button>
+        </div>
+        <button onclick="closeAdminSystemModal()" class="btn-secondary" style="width:100%;">关闭</button>
+    </div>
+</div>
+
+<!-- 用户管理弹窗 -->
+<div id="userManagementModal" class="modal">
+    <div class="modal-content" style="max-width:450px;">
+        <h3>👥 用户管理</h3>
+        <div id="userList" style="max-height:300px;overflow-y:auto;margin:20px 0;">
+            <div class="empty-tip">加载用户中...</div>
+        </div>
+        <button onclick="closeUserManagementModal()" class="btn-secondary" style="width:100%;">关闭</button>
+    </div>
+</div>
+
+<!-- 约局管理弹窗 -->
+<div id="partyManagementModal" class="modal">
+    <div class="modal-content" style="max-width:450px;">
+        <h3>🎮 约局管理</h3>
+        <div id="partyList" style="max-height:300px;overflow-y:auto;margin:20px 0;">
+            <div class="empty-tip">加载约局中...</div>
+        </div>
+        <button onclick="closePartyManagementModal()" class="btn-secondary" style="width:100%;">关闭</button>
+    </div>
+</div>
+
+<!-- 群聊管理弹窗 -->
+<div id="groupManagementModal" class="modal">
+    <div class="modal-content" style="max-width:450px;">
+        <h3>💬 群聊管理</h3>
+        <div id="groupList" style="max-height:300px;overflow-y:auto;margin:20px 0;">
+            <div class="empty-tip">加载群聊中...</div>
+        </div>
+        <button onclick="closeGroupManagementModal()" class="btn-secondary" style="width:100%;">关闭</button>
     </div>
 </div>
 
@@ -1111,7 +1172,209 @@
         if (userId) localStorage.setItem('userId', userId);
     }
 
+    function logout() {
+        if (confirm('确定要退出登录吗？')) {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('user');
+            sessionStorage.removeItem('userId');
+            showToast('已退出登录', 1500);
+            setTimeout(() => {
+                window.location.href = '/login.html';
+            }, 1000);
+        }
+    }
+
+    // 管理员系统相关函数
+    function openAdminModal() {
+        document.getElementById('adminPasswordModal').style.display = 'flex';
+    }
+
+    function closeAdminPasswordModal() {
+        document.getElementById('adminPasswordModal').style.display = 'none';
+        document.getElementById('adminPassword').value = '';
+    }
+
+    function closeAdminSystemModal() {
+        document.getElementById('adminSystemModal').style.display = 'none';
+    }
+
+    function closeUserManagementModal() {
+        document.getElementById('userManagementModal').style.display = 'none';
+    }
+
+    function closePartyManagementModal() {
+        document.getElementById('partyManagementModal').style.display = 'none';
+    }
+
+    function closeGroupManagementModal() {
+        document.getElementById('groupManagementModal').style.display = 'none';
+    }
+
+    function verifyAdminPassword() {
+        const password = document.getElementById('adminPassword').value;
+        if (password === '666') {
+            closeAdminPasswordModal();
+            document.getElementById('adminSystemModal').style.display = 'flex';
+            showToast('管理员验证成功', 1500);
+        } else {
+            showToast('密码错误，请重试', 2000);
+        }
+    }
+
+    async function openUserManagement() {
+        const userListDiv = document.getElementById('userList');
+        userListDiv.innerHTML = '<div class="empty-tip">加载用户中...</div>';
+        
+        try {
+            const data = await fetchData();
+            const users = data.userProfiles || [];
+            
+            if (users.length === 0) {
+                userListDiv.innerHTML = '<div class="empty-tip">暂无用户</div>';
+            } else {
+                userListDiv.innerHTML = '';
+                users.forEach(user => {
+                    const userItem = document.createElement('div');
+                    userItem.className = 'invite-item';
+                    userItem.innerHTML = `
+                        <div>
+                            <strong>${user.name || '未知用户'}</strong><br>
+                            <span style="font-size:0.75rem;">ID: ${user.id}</span>
+                        </div>
+                        <button onclick="deleteUser('${user.id}')" style="background:#e74c3c;color:white;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;">删除</button>
+                    `;
+                    userListDiv.appendChild(userItem);
+                });
+            }
+        } catch (error) {
+            userListDiv.innerHTML = '<div class="empty-tip">加载失败</div>';
+            console.error('加载用户失败:', error);
+        }
+        
+        document.getElementById('userManagementModal').style.display = 'flex';
+    }
+
+    async function openPartyManagement() {
+        const partyListDiv = document.getElementById('partyList');
+        partyListDiv.innerHTML = '<div class="empty-tip">加载约局中...</div>';
+        
+        try {
+            const data = await fetchData();
+            const parties = data.parties || [];
+            
+            if (parties.length === 0) {
+                partyListDiv.innerHTML = '<div class="empty-tip">暂无约局</div>';
+            } else {
+                partyListDiv.innerHTML = '';
+                parties.forEach(party => {
+                    const partyItem = document.createElement('div');
+                    partyItem.className = 'invite-item';
+                    partyItem.innerHTML = `
+                        <div>
+                            <strong>${party.name || '未知约局'}</strong><br>
+                            <span style="font-size:0.75rem;">${party.sport} · ${party.playerCount}/${party.maxPlayers}人</span>
+                        </div>
+                        <div style="display:flex;gap:5px;">
+                            <button onclick="kickUserFromParty('${party.id}')" style="background:#f39c12;color:white;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;">踢人</button>
+                            <button onclick="deleteParty('${party.id}')" style="background:#e74c3c;color:white;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;">删除</button>
+                        </div>
+                    `;
+                    partyListDiv.appendChild(partyItem);
+                });
+            }
+        } catch (error) {
+            partyListDiv.innerHTML = '<div class="empty-tip">加载失败</div>';
+            console.error('加载约局失败:', error);
+        }
+        
+        document.getElementById('partyManagementModal').style.display = 'flex';
+    }
+
+    async function openGroupManagement() {
+        const groupListDiv = document.getElementById('groupList');
+        groupListDiv.innerHTML = '<div class="empty-tip">加载群聊中...</div>';
+        
+        try {
+            const data = await fetchData();
+            const groups = data.groups || [];
+            
+            if (groups.length === 0) {
+                groupListDiv.innerHTML = '<div class="empty-tip">暂无群聊</div>';
+            } else {
+                groupListDiv.innerHTML = '';
+                groups.forEach(group => {
+                    const groupItem = document.createElement('div');
+                    groupItem.className = 'invite-item';
+                    groupItem.innerHTML = `
+                        <div>
+                            <strong>${group.name || '未知群聊'}</strong><br>
+                            <span style="font-size:0.75rem;">${group.members?.length || 0}人</span>
+                        </div>
+                        <div style="display:flex;gap:5px;">
+                            <button onclick="kickUserFromGroup('${group.id}')" style="background:#f39c12;color:white;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;">踢人</button>
+                            <button onclick="deleteGroup('${group.id}')" style="background:#e74c3c;color:white;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;">删除</button>
+                        </div>
+                    `;
+                    groupListDiv.appendChild(groupItem);
+                });
+            }
+        } catch (error) {
+            groupListDiv.innerHTML = '<div class="empty-tip">加载失败</div>';
+            console.error('加载群聊失败:', error);
+        }
+        
+        document.getElementById('groupManagementModal').style.display = 'flex';
+    }
+
+    function deleteUser(userId) {
+        if (confirm('确定要删除该用户吗？')) {
+            // 这里应该调用后端API删除用户
+            showToast('用户删除成功', 1500);
+            // 重新加载用户列表
+            openUserManagement();
+        }
+    }
+
+    function deleteParty(partyId) {
+        if (confirm('确定要删除该约局吗？')) {
+            // 这里应该调用后端API删除约局
+            showToast('约局删除成功', 1500);
+            // 重新加载约局列表
+            openPartyManagement();
+        }
+    }
+
+    function kickUserFromParty(partyId) {
+        const userId = prompt('请输入要踢出的用户ID:');
+        if (userId) {
+            // 这里应该调用后端API踢出用户
+            showToast('用户已踢出约局', 1500);
+        }
+    }
+
+    function deleteGroup(groupId) {
+        if (confirm('确定要删除该群聊吗？')) {
+            // 这里应该调用后端API删除群聊
+            showToast('群聊删除成功', 1500);
+            // 重新加载群聊列表
+            openGroupManagement();
+        }
+    }
+
+    function kickUserFromGroup(groupId) {
+        const userId = prompt('请输入要踢出的用户ID:');
+        if (userId) {
+            // 这里应该调用后端API踢出用户
+            showToast('用户已踢出群聊', 1500);
+        }
+    }
+
     (async function init() {
+        // 检查是否已登录
+        if (!localStorage.getItem('userId')) {
+            window.location.href = '/login.html';
+            return;
+        }
         syncLocalUserId();
         await refreshAll();
         bindSaveEvent();

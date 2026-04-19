@@ -1,5 +1,6 @@
 const express = require("express");
 const fs = require("fs");
+const path = require("path");
 const app = express();
 app.use(express.json());
 
@@ -41,12 +42,12 @@ function saveData() {
     console.log("💾 数据已保存");
 }
 
-// ========== 静态文件（放在API路由之后） ==========
-app.use(express.static(__dirname + "/public"));
+// ========== 静态文件服务 ==========
+// 使用绝对路径确保正确找到静态文件
+app.use(express.static(path.join(__dirname, 'public')));
 
-// ========== API 路由（全部放在静态文件之前） ==========
-
-// 获取单个约局详情（必须放在 static 之前）
+// ========== 特殊API路由（放在static之后，但需要特殊处理） ==========
+// 获取单个约局详情
 app.get("/api/party/:id", (req, res) => {
     const partyId = parseInt(req.params.id);
     const party = data.parties.find(p => p.id === partyId);
@@ -60,6 +61,8 @@ app.get("/api/party/:id", (req, res) => {
         res.status(404).json({ error: "约局不存在" });
     }
 });
+
+// ========== 其他API路由（放在静态文件之后） ==========
 
 app.get("/data", (req, res) => res.json(data));
 app.get("/groups", (req, res) => res.json(data.groups || []));
@@ -389,7 +392,17 @@ app.post("/chat/conversations", (req, res) => {
 });
 
 // ========== 页面路由 ==========
-app.get("/", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
+// 根路径重定向到登录页面
+app.get("/", (req, res) => {
+    res.redirect("/login.html");
+});
+
+// 登录页面路由
+app.get("/login.html", (req, res) => {
+    const loginPath = path.join(__dirname, 'public', 'pages', 'login.html');
+    console.log('Serving login.html from:', loginPath);
+    res.sendFile(loginPath);
+});
 app.get("/square.html", (req, res) => res.sendFile("pages/square.html", { root: __dirname + "/public" }));
 app.get("/party.html", (req, res) => res.sendFile("pages/party.html", { root: __dirname + "/public" }));
 app.get("/profile.html", (req, res) => res.sendFile("pages/profile.html", { root: __dirname + "/public" }));
@@ -403,5 +416,5 @@ app.get("/party-detail.html", (req, res) => res.sendFile("pages/party-detail.htm
 app.get("/manifest.json", (req, res) => res.sendFile("manifest.json", { root: __dirname + "/public" }));
 app.get("/sw.js", (req, res) => res.sendFile("sw.js", { root: __dirname + "/public" }));
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`校搭联机服务器启动：http://localhost:${PORT}`));

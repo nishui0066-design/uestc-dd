@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#5b78f5">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <title>登录 - 校搭联机</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #5b78f5, #8b5cf6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 28px;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            margin-bottom: 24px;
+            color: #5b78f5;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 32px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 40px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #5b78f5;
+            box-shadow: 0 0 0 3px rgba(91, 120, 245, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            background: linear-gradient(135deg, #5b78f5, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 16px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(91, 120, 245, 0.4);
+        }
+
+        .register-link {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .register-link a {
+            color: #5b78f5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        .toast-msg {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.8rem;
+            margin-top: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">🏐</div>
+        <h1>校搭联机</h1>
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" placeholder="请输入用户名" required>
+            </div>
+            <button type="submit" class="btn-login">登录</button>
+            <div class="register-link">
+                没有账号？<a href="#" id="registerLink">立即注册</a>
+            </div>
+        </form>
+    </div>
+    <div id="toastMsg" class="toast-msg"></div>
+
+    <script>
+        function showToast(msg, duration = 2000) {
+            const toast = document.getElementById('toastMsg');
+            toast.textContent = msg;
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', duration);
+        }
+
+        async function login(username) {
+            try {
+                // 检查用户是否存在
+                const response = await fetch('/data');
+                if (!response.ok) throw new Error('获取数据失败');
+                
+                const data = await response.json();
+                const user = data.userProfiles.find(u => u.name === username);
+                
+                if (user) {
+                    // 用户存在，登录成功
+                    localStorage.setItem('userId', user.id);
+                    localStorage.setItem('user', JSON.stringify(user));
+                    showToast('登录成功！', 1500);
+                    setTimeout(() => {
+                        window.location.href = '/square.html';
+                    }, 1000);
+                } else {
+                    // 用户不存在，提示注册
+                    if (confirm('用户不存在，是否注册新用户？')) {
+                        register(username);
+                    }
+                }
+            } catch (error) {
+                console.error('登录失败:', error);
+                showToast('登录失败，请重试', 2000);
+            }
+        }
+
+        async function register(username) {
+            try {
+                // 创建新用户
+                const newUser = {
+                    id: 'u' + Date.now(),
+                    name: username,
+                    gender: '男',
+                    currentSport: '',
+                    avatar: '😀',
+                    avatarColor: '#5b78f5',
+                    signature: '',
+                    currentStatus: '在线',
+                    scores: {},
+                    interests: [],
+                    t: Date.now()
+                };
+
+                // 保存新用户
+                const response = await fetch('/online', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newUser)
+                });
+
+                if (response.ok) {
+                    // 注册成功，自动登录
+                    localStorage.setItem('userId', newUser.id);
+                    localStorage.setItem('user', JSON.stringify(newUser));
+                    showToast('注册成功！', 1500);
+                    setTimeout(() => {
+                        window.location.href = '/square.html';
+                    }, 1000);
+                } else {
+                    showToast('注册失败，请重试', 2000);
+                }
+            } catch (error) {
+                console.error('注册失败:', error);
+                showToast('注册失败，请重试', 2000);
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            if (username) {
+                login(username);
+            } else {
+                showToast('请输入用户名', 1500);
+            }
+        });
+
+        document.getElementById('registerLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            if (username) {
+                register(username);
+            } else {
+                showToast('请输入用户名', 1500);
+            }
+        });
+
+        // 检查是否已登录
+        if (localStorage.getItem('userId')) {
+            window.location.href = '/square.html';
+        }
+    </script>
+</body>
+</html>

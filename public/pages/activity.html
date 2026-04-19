@@ -88,9 +88,10 @@
         let partner = null;
         
         window.onload = () => {
+            const userId = localStorage.getItem("userId");
             const saved = localStorage.getItem("user");
-            if (!saved) {
-                window.location.href = "register.html";
+            if (!userId || !saved) {
+                window.location.href = "login.html";
                 return;
             }
             me = JSON.parse(saved);

@@ -15,15 +15,19 @@ window.onload = () => {
         sendMeToServer();
     }
     setInterval(() => {
-        syncOnlineUsers();
-        checkInvites();
+        if (me) {
+            syncOnlineUsers();
+            checkInvites();
+        }
     }, 3000);
     window.addEventListener("beforeunload", () => {
-        fetch("/offline", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ id: me ? me.id : null })
-        });
+        if (me) {
+            fetch("/offline", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ id: me.id })
+            });
+        }
     });
 };
 

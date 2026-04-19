@@ -240,8 +240,8 @@
             .then(html => document.getElementById('nav-placeholder').innerHTML = html);
         
         // 检查登录
-        if (!localStorage.getItem("user")) {
-            window.location.href = "register.html";
+        if (!localStorage.getItem("userId")) {
+            window.location.href = "login.html";
         }
     </script>
     <script src="../js/square.js"></script>
