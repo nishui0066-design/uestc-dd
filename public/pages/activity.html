@@ -76,7 +76,6 @@
         <div class="score-change">
             🏆 赢 +10分
         </div>
-        <p style="color: #666;">输不扣分，友谊第一！</p>
         <div class="btn-group">
             <button class="btn-win" onclick="recordWin()">我赢了 (+10)</button>
             <button class="btn-lose" onclick="recordLose()">结束活动</button>
@@ -116,24 +115,34 @@
                 return;
             }
             
+            // 赢家加分
             if (!me.scores[currentSport]) {
                 me.scores[currentSport] = 50;
             }
             me.scores[currentSport] += 10;
             
-            // 保存活动记录
-            fetch("/history/add", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    winner: me.id,
-                    loser: partner.id,
-                    sport: currentSport,
-                    winnerScoreChange: 10,
-                    time: Date.now()
-                })
-            });
+            // 输家减分（需要从服务器获取对手信息并更新）
+            fetch("/data")
+                .then(r => r.json())
+                .then(data => {
+                    let loser = data.userProfiles.find(u => u.id === partner.id);
+                    if (!loser) loser = data.onlineUsers.find(u => u.id === partner.id);
+                    if (loser) {
+                        if (!loser.scores[currentSport]) {
+                            loser.scores[currentSport] = 50;
+                        }
+                        loser.scores[currentSport] -= 10;
+                        
+                        // 更新输家数据
+                        fetch("/online", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(loser)
+                        });
+                    }
+                });
             
+            // 保存赢家
             localStorage.setItem("user", JSON.stringify(me));
             
             fetch("/online", {
@@ -142,11 +151,23 @@
                 body: JSON.stringify(me)
             });
             
-            alert(`🎉 恭喜获胜！${currentSport}积分 +10，当前积分：${me.scores[currentSport]}`);
+            fetch("/history/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    winner: me.id,
+                    loser: partner.id,
+                    sport: currentSport,
+                    winnerScoreChange: 10,
+                    loserScoreChange: -10,
+                    time: Date.now()
+                })
+            });
+            
+            alert(`🎉 恭喜获胜！${currentSport}积分 +10，对手 -10 分`);
             localStorage.removeItem("activityPartner");
             window.location.href = "profile.html";
         }
-        
         function recordLose() {
             localStorage.removeItem("activityPartner");
             window.location.href = "profile.html";

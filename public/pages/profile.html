@@ -139,6 +139,26 @@
             padding: 6px 16px;
             border-radius: 40px;
             color: #334155;
+            cursor: pointer;
+        }
+        
+        .current-sport:hover {
+            background: #e2e8f0;
+        }
+
+        .edit-btn {
+            background: #5b78f5;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 4px 12px;
+            margin-left: 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .edit-btn:hover {
+            background: #4a67e0;
         }
 
         .scores-grid {
@@ -356,6 +376,33 @@
             text-align: center;
         }
         
+        .modal-content input, .modal-content select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 40px;
+            font-size: 14px;
+        }
+        
+        .modal-content button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: #5b78f5;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #333;
+        }
+        
         .emoji-grid {
             display: flex;
             flex-wrap: wrap;
@@ -396,24 +443,29 @@
         .color-option:hover {
             transform: scale(1.1);
         }
-        
-        .edit-signature-btn {
-            background: #f1f5f9;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 40px;
-            margin-top: 8px;
-            cursor: pointer;
-            font-size: 12px;
+
+        .invite-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
         
-        .signature-input-modal input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 40px;
-            margin: 15px 0;
-            font-size: 14px;
+        .invite-item {
+            background: #f9fafc;
+            padding: 12px 16px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .invite-item button {
+            background: #5b78f5;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -425,8 +477,11 @@
             <div class="info-basic">
                 <h1 id="userName">加载中...</h1>
                 <div class="signature" id="signature" onclick="openSignatureModal()">✏️ 点击编辑签名</div>
-                <div><span class="gender-badge" id="userGender">--</span></div>
-                <div class="current-sport" id="currentSport">⚡ 当前运动: --</div>
+                <div>
+                    <span class="gender-badge" id="userGender">--</span>
+                    <button class="edit-btn" onclick="openEditProfileModal()">✏️ 编辑资料</button>
+                </div>
+                <div class="current-sport" id="currentSport" onclick="openStatusModal()">⚡ 当前运动: --</div>
             </div>
         </div>
     </div>
@@ -450,6 +505,17 @@
             <div class="interests-label">🏅 选择你感兴趣的运动/活动（可多选）</div>
             <div class="checkbox-group" id="interestsCheckboxGroup"></div>
             <button class="btn-save" id="saveInterestsBtn">💾 保存兴趣设置</button>
+        </div>
+    </div>
+
+    <!-- 我的邀请卡片 -->
+    <div class="card">
+        <div class="card-header">
+            <h2>🔔 我的邀请</h2>
+            <span id="invite-count">0</span>
+        </div>
+        <div id="invitesList" class="invite-list">
+            <div class="empty-tip">暂无邀请</div>
         </div>
     </div>
 
@@ -481,18 +547,67 @@
         <div class="emoji-grid" id="emojiGrid"></div>
         <h3>选择背景色</h3>
         <div class="color-grid" id="colorGrid"></div>
-        <button onclick="closeAvatarModal()" style="margin-top:15px;padding:8px 20px;border:none;border-radius:40px;background:#e2e8f0;cursor:pointer;">关闭</button>
+        <button onclick="closeAvatarModal()" style="margin-top:15px;padding:8px 20px;background:#e2e8f0;">关闭</button>
     </div>
 </div>
 
 <!-- 签名编辑弹窗 -->
 <div id="signatureModal" class="modal">
-    <div class="modal-content signature-input-modal">
+    <div class="modal-content">
         <h3>编辑个性签名</h3>
         <input type="text" id="signatureInput" placeholder="写点什么吧...">
         <div style="display:flex;gap:10px;">
-            <button onclick="saveSignature()" style="flex:1;padding:10px;background:#5b78f5;color:white;border:none;border-radius:40px;cursor:pointer;">保存</button>
-            <button onclick="closeSignatureModal()" style="flex:1;padding:10px;background:#e2e8f0;border:none;border-radius:40px;cursor:pointer;">取消</button>
+            <button onclick="saveSignature()" class="btn-primary">保存</button>
+            <button onclick="closeSignatureModal()" class="btn-secondary">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑资料弹窗 -->
+<div id="editProfileModal" class="modal">
+    <div class="modal-content">
+        <h3>编辑资料</h3>
+        <p style="text-align:left;">昵称：</p>
+        <input type="text" id="editName" placeholder="昵称">
+        <p style="text-align:left;">性别：</p>
+        <select id="editGender">
+            <option value="男">男</option>
+            <option value="女">女</option>
+        </select>
+        <div style="display:flex;gap:10px;">
+            <button onclick="saveProfileEdit()" class="btn-primary">保存</button>
+            <button onclick="closeEditProfileModal()" class="btn-secondary">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 设置运动状态弹窗 -->
+<div id="statusModal" class="modal">
+    <div class="modal-content">
+        <h3>设置运动状态</h3>
+        <p style="text-align:left;">当前运动：</p>
+        <select id="statusSport">
+            <option value="">未选择</option>
+            <option value="足球">足球</option>
+            <option value="篮球">篮球</option>
+            <option value="羽毛球">羽毛球</option>
+            <option value="游泳">游泳</option>
+            <option value="跑步">跑步</option>
+            <option value="乒乓球">乒乓球</option>
+            <option value="王者荣耀">王者荣耀</option>
+            <option value="瓦罗兰特">瓦罗兰特</option>
+            <option value="LOL">LOL</option>
+        </select>
+        <p style="text-align:left;">在线状态：</p>
+        <select id="statusState">
+            <option value="在线">在线</option>
+            <option value="等待匹配">等待匹配</option>
+            <option value="游戏中">游戏中</option>
+            <option value="休息中">休息中</option>
+        </select>
+        <div style="display:flex;gap:10px;">
+            <button onclick="saveStatusSetting()" class="btn-primary">保存</button>
+            <button onclick="closeStatusModal()" class="btn-secondary">取消</button>
         </div>
     </div>
 </div>
@@ -547,8 +662,8 @@
     }
 
     function getUserFromData(data, userId) {
+        // 只从 userProfiles 读取
         let profile = data.userProfiles.find(u => u.id === userId);
-        if (!profile) profile = data.onlineUsers.find(u => u.id === userId);
         if (!profile) return { id: userId, name: "新用户", gender: "保密", scores: {}, currentSport: "未选择", interests: [], avatar: "😀", avatarColor: "#5b78f5", signature: "" };
         if (!profile.interests) profile.interests = [];
         if (!profile.scores) profile.scores = {};
@@ -600,9 +715,10 @@
 
     function renderInterestsCheckbox(interestsArray) {
         const group = document.getElementById('interestsCheckboxGroup');
+        if (!group) return;
         group.innerHTML = '';
         allSportOptions.forEach(sport => {
-            const isChecked = interestsArray.includes(sport);
+            const isChecked = interestsArray && interestsArray.includes(sport);
             const label = document.createElement('label');
             const cb = document.createElement('input');
             cb.type = 'checkbox';
@@ -623,10 +739,19 @@
         if (!currentUser) return false;
         try {
             const updatedUser = {
-                ...currentUser,
-                t: Date.now(),
-                currentStatus: '在线'
+                id: currentUser.id,
+                name: currentUser.name,
+                gender: currentUser.gender,
+                scores: currentUser.scores || {},
+                currentSport: currentUser.currentSport,
+                currentStatus: currentUser.currentStatus,
+                avatar: currentUser.avatar || "😀",
+                avatarColor: currentUser.avatarColor || "#5b78f5",
+                signature: currentUser.signature || "",
+                interests: currentUser.interests || [],  // 确保这行存在
+                t: Date.now()
             };
+            console.log("发送的兴趣:", updatedUser.interests);
             const response = await fetch('/online', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -642,9 +767,17 @@
     async function saveUserInterests(selectedInterests) {
         if (!currentUser) return false;
         currentUser.interests = selectedInterests;
+        
+        // 保存到 localStorage
+        localStorage.setItem("user", JSON.stringify(currentUser));
+        
         const success = await saveUserData();
-        if (success) showToast('兴趣已保存 ✅', 1500);
-        else showToast('保存失败，请重试', 2000);
+        if (success) {
+            showToast('兴趣已保存 ✅', 1500);
+            renderInterestsCheckbox(currentUser.interests || []);
+        } else {
+            showToast('保存失败，请重试', 2000);
+        }
         return success;
     }
 
@@ -679,10 +812,11 @@
     function closeAvatarModal() {
         document.getElementById('avatarModal').style.display = 'none';
     }
-    
+        
     async function selectAvatar(emoji) {
         currentUser.avatar = emoji;
         await saveUserData();
+        localStorage.setItem("user", JSON.stringify(currentUser));  // 添加这行
         updateAvatarDisplay();
         closeAvatarModal();
         showToast('头像已更新', 1000);
@@ -691,6 +825,7 @@
     async function selectAvatarColor(color) {
         currentUser.avatarColor = color;
         await saveUserData();
+        localStorage.setItem("user", JSON.stringify(currentUser));  // 添加这行
         updateAvatarDisplay();
         closeAvatarModal();
         showToast('背景色已更新', 1000);
@@ -712,29 +847,113 @@
         const input = document.getElementById('signatureInput');
         currentUser.signature = input.value.trim();
         await saveUserData();
+        localStorage.setItem("user", JSON.stringify(currentUser));  // 添加这行
         updateSignatureDisplay();
         closeSignatureModal();
         showToast('签名已更新', 1000);
     }
 
+    // 编辑资料相关函数
+    function openEditProfileModal() {
+        document.getElementById('editName').value = currentUser.name || '';
+        document.getElementById('editGender').value = currentUser.gender || '男';
+        document.getElementById('editProfileModal').style.display = 'flex';
+    }
+
+    function closeEditProfileModal() {
+        document.getElementById('editProfileModal').style.display = 'none';
+    }
+
+    async function saveProfileEdit() {
+        const newName = document.getElementById('editName').value.trim();
+        const newGender = document.getElementById('editGender').value;
+        if (!newName) {
+            showToast('昵称不能为空', 1000);
+            return;
+        }
+        currentUser.name = newName;
+        currentUser.gender = newGender;
+        await saveUserData();
+        renderBasicInfo(currentUser);
+        closeEditProfileModal();
+        showToast('资料已更新', 1000);
+        localStorage.setItem("user", JSON.stringify(currentUser));
+    }
+
+    // 状态设置相关函数
+    function openStatusModal() {
+        document.getElementById('statusSport').value = currentUser.currentSport || '';
+        document.getElementById('statusState').value = currentUser.currentStatus || '在线';
+        document.getElementById('statusModal').style.display = 'flex';
+    }
+
+    function closeStatusModal() {
+        document.getElementById('statusModal').style.display = 'none';
+    }
+
+    async function saveStatusSetting() {
+        const newSport = document.getElementById('statusSport').value;
+        const newStatus = document.getElementById('statusState').value;
+        currentUser.currentSport = newSport || null;
+        currentUser.currentStatus = newStatus;
+        await saveUserData();
+        localStorage.setItem("user", JSON.stringify(currentUser));  // 添加这行
+        renderBasicInfo(currentUser);
+        closeStatusModal();
+        showToast('状态已更新', 1000);
+    }
+
     function renderMatches(data, userId) {
         const container = document.getElementById('matchesList');
         const relatedMatches = data.matches.filter(m => m.p1 === userId || m.p2 === userId);
+        
         if (relatedMatches.length === 0) {
             container.innerHTML = '<div class="empty-tip">🤝 暂无运动搭子，快去广场邀请好友~</div>';
             return;
         }
+        
         container.innerHTML = '';
         relatedMatches.forEach(match => {
             const partnerId = match.p1 === userId ? match.p2 : match.p1;
             const partnerProfile = data.userProfiles.find(p => p.id === partnerId) || { name: '未知用户' };
             const partnerName = partnerProfile.name || partnerId.slice(0, 8);
+            
             const div = document.createElement('div');
             div.className = 'match-item';
-            div.innerHTML = `<div class="match-name">🏅 ${partnerName}</div>
-                            <span style="font-size:0.75rem; background:#d9f99d; padding:6px 12px; border-radius:40px;">运动搭子</span>`;
+            div.innerHTML = `
+                <div class="match-name">🏅 ${partnerName}</div>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="goToChat('${partnerId}','${partnerName}')" style="background:#5b78f5;color:white;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;">💬 聊天</button>
+                    <button onclick="openActivity('${partnerId}','${partnerName}')" style="background:#2ecc71;color:white;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;">🎮 活动</button>
+                    <button onclick="removeMatch('${partnerId}')" style="background:#e74c3c;color:white;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;">解除</button>
+                </div>
+            `;
             container.appendChild(div);
         });
+    }
+
+    function goToChat(pid, name) {
+        localStorage.setItem("openChatWith", JSON.stringify({ id: pid, name: name }));
+        window.location.href = "chat.html";
+    }
+
+    function openActivity(pid, name) {
+        localStorage.setItem("activityPartner", JSON.stringify({ id: pid, name: name }));
+        window.location.href = "activity.html";
+    }
+
+    function removeMatch(partnerId) {
+        if (confirm("确定要解除搭子关系吗？")) {
+            const userId = getCurrentUserId();
+            fetch("/match/remove", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ me: userId, partner: partnerId })
+            }).then(() => {
+                showToast("已解除搭子关系", 1000);
+                refreshAll();
+            });
+        }
     }
 
     function renderHistory(data, userId) {
@@ -762,26 +981,114 @@
         });
     }
 
+    // 渲染邀请列表
+    function renderInvites(data, userId) {
+        const container = document.getElementById('invitesList');
+        const inviteCount = document.getElementById('invite-count');
+        const myInvites = data.invites.filter(i => i.to === userId);
+        
+        if (inviteCount) inviteCount.innerText = myInvites.length;
+        
+        if (myInvites.length === 0) {
+            container.innerHTML = '<div class="empty-tip">暂无邀请</div>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        myInvites.forEach(invite => {
+            const fromUser = data.userProfiles.find(u => u.id === invite.from) || { name: '未知用户' };
+            const div = document.createElement('div');
+            div.className = 'invite-item';
+            div.innerHTML = `
+                <span>${fromUser.name} 邀请你成为搭子</span>
+                <button onclick="acceptInvite('${invite.from}')">接受</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 接受邀请
+    async function acceptInvite(fromId) {
+        const userId = getCurrentUserId();
+        
+        // 检查是否已经是搭子
+        const fullData = await fetchData();
+        const alreadyMatched = fullData.matches.some(m => 
+            (m.p1 === fromId && m.p2 === userId) || 
+            (m.p1 === userId && m.p2 === fromId)
+        );
+        
+        if (alreadyMatched) {
+            showToast('你们已经是搭子了', 1000);
+            // 清除邀请
+            await fetch("/invite/clear", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ to: userId })
+            });
+            refreshAll();
+            return;
+        }
+        
+        // 创建匹配
+        await fetch("/match", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ p1: fromId, p2: userId })
+        });
+        
+        // 清除邀请
+        await fetch("/invite/clear", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: userId })
+        });
+        
+        showToast('已添加为搭子！', 1500);
+        refreshAll();
+    }
+
     async function refreshAll() {
-        try {
-            const userId = getCurrentUserId();
-            const fullData = await fetchData();
-            const user = getUserFromData(fullData, userId);
-            if (!user) {
-                showToast('用户不存在，请重新登录', 2000);
-                return;
-            }
+    try {
+        const userId = getCurrentUserId();
+        const fullData = await fetchData();
+        let user = getUserFromData(fullData, userId);
+        
+        // 如果内存中已经有 currentUser，完全保留内存中的数据，不从服务器覆盖
+        if (currentUser) {
+            currentUser.currentSport = currentUser.currentSport;
+            currentUser.currentStatus = currentUser.currentStatus;
+            currentUser.name = currentUser.name;
+            currentUser.gender = currentUser.gender;
+            currentUser.avatar = currentUser.avatar;
+            currentUser.avatarColor = currentUser.avatarColor;
+            currentUser.signature = currentUser.signature;
+            currentUser.interests = currentUser.interests;
+            // 只更新积分和战绩（这些是从服务器来的）
+            currentUser.scores = user.scores;
+            renderScores(currentUser.scores || {});
+            renderMatches(fullData, userId);
+            renderHistory(fullData, userId);
+            renderBasicInfo(currentUser);
+            renderInterestsCheckbox(currentUser.interests || []);
+        } else {
             currentUser = user;
             renderBasicInfo(user);
             renderScores(user.scores || {});
             renderInterestsCheckbox(user.interests || []);
             renderMatches(fullData, userId);
             renderHistory(fullData, userId);
-        } catch (error) {
-            console.error('加载页面数据失败', error);
-            showToast('数据加载失败，请刷新页面', 2000);
         }
+    } catch (error) {
+        console.error('加载页面数据失败', error);
+        showToast('数据加载失败，请刷新页面', 2000);
     }
+    
+
+    currentUser = user;
+    localStorage.setItem("user", JSON.stringify(currentUser));  // 添加这行
+    renderInvites(fullData, userId);    
+}
 
     function bindSaveEvent() {
         const saveBtn = document.getElementById('saveInterestsBtn');

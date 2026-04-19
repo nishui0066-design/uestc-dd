@@ -29,10 +29,14 @@ window.onload = () => {
 };
 
 function sendMeToServer() {
+    // 先从 localStorage 获取用户
+    let user = JSON.parse(localStorage.getItem("user"));
+    if (!user) return;
+    
     fetch("/online", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(me)
+        body: JSON.stringify(user)
     });
 }
 
@@ -197,6 +201,24 @@ function goToChat(pid, name) {
     window.location.href = "chat.html";
 }
 
+function openActivity(pid, name) {
+    localStorage.setItem("activityPartner", JSON.stringify({ id: pid, name: name }));
+    window.location.href = "activity.html";
+}
+
+function removeMatch(partnerId) {
+    if (confirm("确定要解除搭子关系吗？")) {
+        fetch("/match/remove", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ me: me.id, partner: partnerId })
+        }).then(() => {
+            alert("已解除搭子关系");
+            renderMyMatches();
+        });
+    }
+}
+
 function showUserDetail(pid) {
     fetch("/data").then(r => r.json()).then(data => {
         let user = data.onlineUsers.find(u => u.id === pid);
@@ -239,23 +261,6 @@ function closeUserDetailModal() {
     if (modal) modal.remove();
 }
 
-function openActivity(pid, name) {
-    localStorage.setItem("activityPartner", JSON.stringify({ id: pid, name: name }));
-    window.location.href = "activity.html";
-}
-
-function removeMatch(partnerId) {
-    if (confirm("确定要解除搭子关系吗？")) {
-        fetch("/match/remove", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ me: me.id, partner: partnerId })
-        }).then(() => {
-            alert("已解除搭子关系");
-            renderMyMatches();
-        });
-    }
-}
 
 // 编辑资料功能
 function openEditProfile() {

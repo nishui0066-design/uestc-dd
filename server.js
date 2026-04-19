@@ -67,15 +67,38 @@ app.get("/groups", (req, res) => res.json(data.groups || []));
 app.post("/online", (req, res) => {
     const u = req.body;
     u.t = Date.now();
-    const idx = data.onlineUsers.findIndex(x => x.id === u.id);
-    if (idx >= 0) data.onlineUsers[idx] = u;
-    else data.onlineUsers.push(u);
     
+    console.log("=== 收到保存请求 ===");
+    console.log("用户ID:", u.id);
+    console.log("姓名:", u.name);
+    console.log("性别:", u.gender);
+    console.log("当前运动:", u.currentSport);
+    console.log("头像:", u.avatar);
+    console.log("签名:", u.signature);
+    
+    // 更新 onlineUsers
+    const onlineIdx = data.onlineUsers.findIndex(x => x.id === u.id);
+    if (onlineIdx >= 0) {
+        data.onlineUsers[onlineIdx] = u;
+    } else {
+        data.onlineUsers.push(u);
+    }
+    
+    // 更新 userProfiles
     const profileIdx = data.userProfiles.findIndex(p => p.id === u.id);
-    if (profileIdx >= 0) data.userProfiles[profileIdx] = u;
-    else data.userProfiles.push(u);
+    if (profileIdx >= 0) {
+        data.userProfiles[profileIdx] = u;
+    } else {
+        data.userProfiles.push(u);
+    }
     
     saveData();
+    
+    // 验证保存结果
+    const saved = data.userProfiles.find(p => p.id === u.id);
+    console.log("保存后的性别:", saved?.gender);
+    console.log("==================");
+    
     res.sendStatus(200);
 });
 

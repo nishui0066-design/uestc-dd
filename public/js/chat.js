@@ -28,13 +28,15 @@ window.onload = () => {
 };
 
 function sendMeToServer() {
+    const saved = localStorage.getItem("user");
+    if (!saved) return;
+    const user = JSON.parse(saved);
     fetch("/online", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(me)
+        body: JSON.stringify(user)
     });
 }
-
 function loadChatData() {
     fetch("/data")
         .then(r => r.json())

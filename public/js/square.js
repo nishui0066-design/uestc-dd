@@ -14,7 +14,10 @@ window.onload = () => {
         refreshOnlineUsers();
         sendMeToServer();
     }
-    setInterval(syncOnlineUsers, 3000);
+    setInterval(() => {
+        syncOnlineUsers();
+        checkInvites();
+    }, 3000);
     window.addEventListener("beforeunload", () => {
         fetch("/offline", {
             method: "POST",
@@ -25,10 +28,13 @@ window.onload = () => {
 };
 
 function sendMeToServer() {
+    const saved = localStorage.getItem("user");
+    if (!saved) return;
+    const user = JSON.parse(saved);
     fetch("/online", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(me)
+        body: JSON.stringify(user)
     });
 }
 
@@ -252,4 +258,53 @@ let userSearchKeyword = "";
 function searchUsers() {
     userSearchKeyword = document.getElementById("user-search").value.trim().toLowerCase();
     renderOnlineUsers();
+}
+
+// 检查邀请
+function checkInvites() {
+    if (!me) return;
+    fetch("/data")
+        .then(r => r.json())
+        .then(data => {
+            const myInvites = data.invites.filter(i => i.to === me.id);
+            if (myInvites.length > 0) {
+                const fromIds = myInvites.map(i => i.from);
+                const fromUsers = data.userProfiles.filter(u => fromIds.includes(u.id));
+                const names = fromUsers.map(u => u.name).join("、");
+                document.getElementById("invite-message").innerHTML = `
+                    <span>🔔 ${names} 邀请你成为搭子</span>
+                    <button onclick="acceptInviteQuick('${myInvites[0].from}')" style="background:#5b78f5;color:white;border:none;padding:4px 12px;border-radius:20px;margin-left:10px;">接受</button>
+                    <button onclick="dismissInvite()" style="background:#e2e8f0;border:none;padding:4px 12px;border-radius:20px;margin-left:5px;">忽略</button>
+                `;
+                document.getElementById("invite-notice").style.display = "block";
+            } else {
+                document.getElementById("invite-notice").style.display = "none";
+            }
+        });
+}
+
+function acceptInviteQuick(fromId) {
+    fetch("/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ p1: fromId, p2: me.id })
+    }).then(() => {
+        fetch("/invite/clear", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: me.id })
+        });
+        alert("已添加为搭子！");
+        document.getElementById("invite-notice").style.display = "none";
+        refreshOnlineUsers();
+    });
+}
+
+function dismissInvite() {
+    fetch("/invite/clear", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: me.id })
+    });
+    document.getElementById("invite-notice").style.display = "none";
 }
